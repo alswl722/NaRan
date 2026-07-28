@@ -173,6 +173,9 @@ class ComparabilityCondition(ContractModel):
     claim_value: str | None = None
     public_value: str | None = None
     reason: str | None = None
+    normalized_unit: str | None = None
+    claim_unit_multiplier: Decimal | None = None
+    public_unit_multiplier: Decimal | None = None
 
 
 class ComparabilityResult(ContractModel):
@@ -265,4 +268,3 @@ class MonitoringCase(ContractModel):
     next_review_date: str
     importance: str
     synthetic: bool
-

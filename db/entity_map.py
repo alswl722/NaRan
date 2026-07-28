@@ -18,6 +18,11 @@ class MappingStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class SourceSystem(StrEnum):
+    ENV_INFO = "env-info"
+    GIR = "gir"
+
+
 class BoundaryCoverage(StrEnum):
     EXACT = "exact"
     SUBSET = "subset"
@@ -27,7 +32,7 @@ class BoundaryCoverage(StrEnum):
 
 @dataclass(frozen=True)
 class EntityMapping:
-    source_system: str
+    source_system: SourceSystem
     source_entity_id: str
     company_id: str
     source_entity_name: str
@@ -56,11 +61,29 @@ class EntityMapping:
 class EntityMap:
     def __init__(self, mappings: Iterable[EntityMapping] = ()) -> None:
         self._mappings = tuple(mappings)
+        self._validate_non_overlapping_periods()
+
+    def _validate_non_overlapping_periods(self) -> None:
+        for index, left in enumerate(self._mappings):
+            for right in self._mappings[index + 1 :]:
+                same_key = (
+                    left.source_system == right.source_system
+                    and left.source_entity_id == right.source_entity_id
+                    and left.company_id == right.company_id
+                )
+                left_end = left.valid_to_year if left.valid_to_year is not None else 9999
+                right_end = right.valid_to_year if right.valid_to_year is not None else 9999
+                overlaps = (
+                    left.valid_from_year <= right_end
+                    and right.valid_from_year <= left_end
+                )
+                if same_key and overlaps:
+                    raise ValueError("같은 기간에 중복되는 기업·사업장 매핑이 있습니다")
 
     def find(
         self,
         *,
-        source_system: str,
+        source_system: SourceSystem,
         source_entity_id: str,
         company_id: str,
         year: int,
@@ -73,14 +96,12 @@ class EntityMap:
             and mapping.company_id == company_id
             and mapping.applies_to(year)
         ]
-        if len(matches) > 1:
-            raise ValueError("같은 기간에 중복되는 기업·사업장 매핑이 있습니다")
         return matches[0] if matches else None
 
     def permits_boundary_alignment(
         self,
         *,
-        source_system: str,
+        source_system: SourceSystem,
         source_entity_id: str,
         company_id: str,
         year: int,
@@ -97,7 +118,7 @@ class EntityMap:
 DEFAULT_ENTITY_MAP = EntityMap(
     [
         EntityMapping(
-            source_system="env-info",
+            source_system=SourceSystem.ENV_INFO,
             source_entity_id="CT000000000000002772",
             company_id="company-samsung-biologics",
             source_entity_name="삼성바이오로직스(주) 1단지",
@@ -106,9 +127,9 @@ DEFAULT_ENTITY_MAP = EntityMap(
             valid_from_year=2024,
             valid_to_year=2024,
             evidence=(
-                "env-info 2024 대표사업장 레코드는 Scope 1을 기업 경계 내 배출량으로 설명",
-                "삼성바이오로직스 2025 ESG 보고서 p.171-172 국내 사업장 값과 동일",
-                "보고서 p.220 검증총량 및 GIR 2024 명세서 총량과 동일",
+                "env-info 2024 대표사업장 레코드는 Scope 1을 기업 경계 내 배출량으로 명시",
+                "env-info 레코드는 해당 사업장을 삼성바이오로직스의 대표사업장으로 명시",
+                "삼성바이오로직스 2025 ESG 보고서는 2024년 국내 사업장 별도 범위를 명시",
             ),
             note=(
                 "2024년에 한해 보고서의 삼성바이오로직스 별도 국내 사업장 "
@@ -116,7 +137,7 @@ DEFAULT_ENTITY_MAP = EntityMap(
             ),
         ),
         EntityMapping(
-            source_system="env-info",
+            source_system=SourceSystem.ENV_INFO,
             source_entity_id="00000000000000095329",
             company_id="company-samsung-electronics",
             source_entity_name="삼성전자(주) 수원사업장",

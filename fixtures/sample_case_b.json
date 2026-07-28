@@ -70,30 +70,84 @@
     "comparable": false,
     "conditions": [
       {
-      "field": "geographic_boundary",
-      "status": "불일치",
-        "claim_value": "한국 및 해외 제조 자회사",
-        "public_value": "대한민국 개별 사업장",
-        "reason": "지역 범위가 달라 직접 비교할 수 없음"
+        "field": "value",
+        "status": "일치",
+        "claim_value": "14889",
+        "public_value": "192012",
+        "reason": "양쪽 수치 존재 확인; 값의 차이는 대조 엔진에서 계산"
       },
       {
-      "field": "entity_level",
+        "field": "metric",
+        "status": "일치",
+        "claim_value": "온실가스 배출량",
+        "public_value": "온실가스 배출량",
+        "reason": null
+      },
+      {
+        "field": "unit",
+        "status": "일치",
+        "claim_value": "1000 tCO2eq",
+        "public_value": "tCO2eq",
+        "reason": "공통단위 tCO2eq로 환산 가능",
+        "normalized_unit": "tCO2eq",
+        "claim_unit_multiplier": "1000",
+        "public_unit_multiplier": "1"
+      },
+      {
+        "field": "value_basis",
+        "status": "일치",
+        "claim_value": "절대량",
+        "public_value": "절대량",
+        "reason": null
+      },
+      {
+        "field": "entity_level",
         "status": "불일치",
         "claim_value": "기업",
         "public_value": "사업장",
-        "reason": "기업 전체와 개별 사업장 데이터임"
+        "reason": "기업과 사업장 단위가 다름"
       },
       {
         "field": "organization_boundary",
         "status": "불일치",
         "claim_value": "연결",
         "public_value": "개별 사업장",
-        "reason": "제조 자회사 전체와 개별 사업장의 조직경계가 다름"
+        "reason": "조직경계가 다름"
+      },
+      {
+        "field": "geographic_boundary",
+        "status": "불일치",
+        "claim_value": "한국 및 해외 제조 자회사",
+        "public_value": "대한민국 개별 사업장",
+        "reason": "지역경계가 다름"
+      },
+      {
+        "field": "scope",
+        "status": "일치",
+        "claim_value": "Scope 1+2",
+        "public_value": "Scope 1+2",
+        "reason": null
+      },
+      {
+        "field": "scope2_method",
+        "status": "누락",
+        "claim_value": "시장기반",
+        "public_value": null,
+        "reason": "scope2_method 비교에 필요한 값이 누락됨"
+      },
+      {
+        "field": "period",
+        "status": "일치",
+        "claim_value": "2024-01-01/2024-12-31",
+        "public_value": "2024-01-01/2024-12-31",
+        "reason": null
       }
     ],
-    "missing_fields": [],
+    "missing_fields": ["scope2_method"],
     "mismatch_reasons": [
-      "글로벌 전사 수치와 대한민국 개별 사업장 수치의 범위가 다름"
+      "기업과 사업장 단위가 다름",
+      "조직경계가 다름",
+      "지역경계가 다름"
     ]
   },
   "expected_verdict": {
