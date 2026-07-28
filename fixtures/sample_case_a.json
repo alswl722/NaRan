@@ -2,7 +2,9 @@
   "company": {
     "id": "company-samsung-biologics",
     "legal_name": "삼성바이오로직스",
-    "identifiers": {},
+    "identifiers": {
+      "env_info_comp_id": "CT000000000000002772"
+    },
     "aliases": ["Samsung Biologics"]
   },
   "report": {
@@ -65,7 +67,7 @@
     {
       "id": "fact-a-scope1-envinfo",
       "company_id": "company-samsung-biologics",
-      "site_id": null,
+      "site_id": "CT000000000000002772",
       "entity_level": "기업",
       "metric": "온실가스 배출량",
       "raw_value": "71840",
@@ -81,15 +83,15 @@
       "display_decimal_places": 0,
       "display_rule": null,
       "disclosure_duty": "자율",
-      "source_url": "pending-verification",
+      "source_url": "https://www.env-info.kr/user/register/viewUserSearch2.do?YEAR=2024&COMP_ID=CT000000000000002772&OPEN_YN=Y",
       "retrieved_at": "2026-07-28T00:00:00+09:00",
-      "source_hash": "pending-verification",
-      "version": "draft-1"
+      "source_hash": "sha256:11ab026e63778e0b9522eabb52a30aca073735ff1865fd7782840859e8df9d92",
+      "version": "env-info-2024-retrieved-2026-07-28"
     },
     {
       "id": "fact-a-scope2-envinfo",
       "company_id": "company-samsung-biologics",
-      "site_id": null,
+      "site_id": "CT000000000000002772",
       "entity_level": "기업",
       "metric": "온실가스 배출량",
       "raw_value": "154679",
@@ -105,10 +107,34 @@
       "display_decimal_places": 0,
       "display_rule": null,
       "disclosure_duty": "자율",
-      "source_url": "pending-verification",
+      "source_url": "https://www.env-info.kr/user/register/viewUserSearch2.do?YEAR=2024&COMP_ID=CT000000000000002772&OPEN_YN=Y",
       "retrieved_at": "2026-07-28T00:00:00+09:00",
-      "source_hash": "pending-verification",
-      "version": "draft-1"
+      "source_hash": "sha256:11ab026e63778e0b9522eabb52a30aca073735ff1865fd7782840859e8df9d92",
+      "version": "env-info-2024-retrieved-2026-07-28"
+    },
+    {
+      "id": "fact-a-scope1-2-gir",
+      "company_id": "company-samsung-biologics",
+      "site_id": null,
+      "entity_level": "사업장",
+      "metric": "온실가스 배출량",
+      "raw_value": "226519",
+      "normalized_value": "226519",
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "scope": "Scope 1+2",
+      "scope2_method": "배출권거래제 기준",
+      "organization_boundary": "개별 사업장",
+      "geographic_boundary": "대한민국",
+      "display_decimal_places": 0,
+      "display_rule": null,
+      "disclosure_duty": "의무",
+      "source_url": "https://www.gir.go.kr/home/index.do?menuId=37&condition.year=2024&searchKey=corpNm&searchValue=%EC%82%BC%EC%84%B1%EB%B0%94%EC%9D%B4%EC%98%A4%EB%A1%9C%EC%A7%81%EC%8A%A4",
+      "retrieved_at": "2026-07-28T00:00:00+09:00",
+      "source_hash": "sha256:eea3f88186045cc6936bc4bf7d779c08c153157822637806df75887be816fd61",
+      "version": "gir-statement-2024-retrieved-2026-07-28"
     }
   ],
   "comparability": {

@@ -62,6 +62,23 @@ def test_case_a_verified_report_evidence() -> None:
     assert all(claim["organization_boundary"] == "별도" for claim in case["claims"])
 
 
+def test_case_a_verified_public_sources() -> None:
+    case = load("sample_case_a.json")
+    facts = {fact["id"]: fact for fact in case["public_facts"]}
+
+    env_scope1 = facts["fact-a-scope1-envinfo"]
+    env_scope2 = facts["fact-a-scope2-envinfo"]
+    gir_total = facts["fact-a-scope1-2-gir"]
+
+    assert env_scope1["raw_value"] == "71840"
+    assert env_scope2["raw_value"] == "154679"
+    assert env_scope1["source_hash"].startswith("sha256:")
+    assert env_scope2["source_hash"] == env_scope1["source_hash"]
+    assert gir_total["raw_value"] == "226519"
+    assert gir_total["disclosure_duty"] == "의무"
+    assert gir_total["source_hash"].startswith("sha256:")
+
+
 def test_case_b_verified_global_report_boundary() -> None:
     case = load("sample_case_b.json")
     claim = case["claims"][0]
@@ -72,6 +89,12 @@ def test_case_b_verified_global_report_boundary() -> None:
     assert claim["scope2_method"] == "시장기반"
     assert claim["geographic_boundary"] == "한국 및 해외 제조 자회사"
     assert case["comparability"]["comparable"] is False
+
+    public_fact = case["public_facts"][0]
+    assert public_fact["site_id"] == "00000000000000095329"
+    assert public_fact["raw_value"] == "192012"
+    assert public_fact["scope2_method"] is None
+    assert public_fact["source_hash"].startswith("sha256:")
 
 
 def test_not_comparable_verdict_cannot_contain_calculation() -> None:

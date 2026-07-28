@@ -2,7 +2,9 @@
   "company": {
     "id": "company-samsung-electronics",
     "legal_name": "삼성전자",
-    "identifiers": {},
+    "identifiers": {
+      "env_info_suwon_comp_id": "00000000000000095329"
+    },
     "aliases": ["Samsung Electronics"]
   },
   "report": {
@@ -42,11 +44,11 @@
     {
       "id": "fact-b-domestic-site-scope1-2",
       "company_id": "company-samsung-electronics",
-      "site_id": "pending-explicit-mapping",
+      "site_id": "00000000000000095329",
       "entity_level": "사업장",
       "metric": "온실가스 배출량",
-      "raw_value": null,
-      "normalized_value": null,
+      "raw_value": "192012",
+      "normalized_value": "192012",
       "unit": "tCO2eq",
       "value_basis": "절대량",
       "period_start": "2024-01-01",
@@ -58,10 +60,10 @@
       "display_decimal_places": 0,
       "display_rule": null,
       "disclosure_duty": "자율",
-      "source_url": "pending-verification",
+      "source_url": "https://www.env-info.kr/user/register/viewUserSearch2.do?YEAR=2024&COMP_ID=00000000000000095329&OPEN_YN=Y",
       "retrieved_at": "2026-07-28T00:00:00+09:00",
-      "source_hash": "pending-verification",
-      "version": "draft-1"
+      "source_hash": "sha256:15aac2e6fa4b6f40eafe7393f70db174bd566facc4b7218f8b3247ac1f54579b",
+      "version": "env-info-2024-retrieved-2026-07-28"
     }
   ],
   "comparability": {
