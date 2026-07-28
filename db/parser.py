@@ -11,11 +11,17 @@ import pdfplumber
 
 
 @dataclass(frozen=True)
+class ExtractedTable:
+    bbox: tuple[float, float, float, float]
+    rows: tuple[tuple[str | None, ...], ...]
+
+
+@dataclass(frozen=True)
 class PageContent:
     page: int
     text: str
-    tables: tuple[tuple[tuple[str | None, ...], ...], ...]
-    extraction_error: str | None = None
+    tables: tuple[ExtractedTable, ...]
+    extraction_errors: tuple[str, ...] = ()
 
     @property
     def has_text_layer(self) -> bool:
@@ -61,6 +67,11 @@ _SIGNALS = {
     ),
 }
 
+_TABLE_SETTINGS = {
+    "vertical_strategy": "text",
+    "horizontal_strategy": "text",
+}
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -77,6 +88,10 @@ def _normalize_table(
         tuple(cell.strip() if isinstance(cell, str) else None for cell in row)
         for row in table
     )
+
+
+def _error(stage: str, exc: Exception) -> str:
+    return f"{stage}: {type(exc).__name__}: {exc}"
 
 
 def parse_pdf(
@@ -100,22 +115,33 @@ def parse_pdf(
         selected = pages or set(range(1, total_pages + 1))
         for page_number in sorted(selected):
             page = pdf.pages[page_number - 1]
+            errors: list[str] = []
             try:
                 text = page.extract_text(layout=True) or ""
-                tables = tuple(
-                    _normalize_table(table) for table in page.extract_tables()
-                )
-                error = None if text.strip() else "텍스트 레이어가 없거나 비어 있음"
-            except (ValueError, TypeError, IndexError) as exc:
+            except Exception as exc:  # PDF 라이브러리의 페이지별 실패를 격리한다.
                 text = ""
-                tables = ()
-                error = f"{type(exc).__name__}: {exc}"
+                errors.append(_error("텍스트 추출 실패", exc))
+            if not text.strip() and not errors:
+                errors.append("텍스트 레이어가 없거나 비어 있음")
+
+            extracted_tables: list[ExtractedTable] = []
+            try:
+                for table in page.find_tables(table_settings=_TABLE_SETTINGS):
+                    rows = table.extract()
+                    extracted_tables.append(
+                        ExtractedTable(
+                            bbox=tuple(float(value) for value in table.bbox),
+                            rows=_normalize_table(rows),
+                        )
+                    )
+            except Exception as exc:  # 텍스트 성공 여부와 무관하게 표 실패만 기록한다.
+                errors.append(_error("표 추출 실패", exc))
             extracted.append(
                 PageContent(
                     page=page_number,
                     text=text,
-                    tables=tables,
-                    extraction_error=error,
+                    tables=tuple(extracted_tables),
+                    extraction_errors=tuple(errors),
                 )
             )
     return ParsedDocument(
@@ -145,8 +171,21 @@ def prefilter_claim_candidates(
             matched = tuple(
                 name for name, pattern in _SIGNALS.items() if pattern.search(line)
             )
-            has_quantity = bool(
-                {"number", "percent", "ghg_unit"} & set(matched)
+            quantity_text = re.sub(
+                r"scope\s*[123](?:\s*\+\s*[123])*",
+                "",
+                line,
+                flags=re.IGNORECASE,
+            )
+            numeric_tokens = _SIGNALS["number"].findall(quantity_text)
+            has_non_year_number = any(
+                not re.fullmatch(r"20\d{2}", token.replace(",", ""))
+                for token in numeric_tokens
+            )
+            has_quantity = (
+                "percent" in matched
+                or "ghg_unit" in matched
+                or has_non_year_number
             )
             if "claim_term" in matched and has_quantity:
                 candidates.append(

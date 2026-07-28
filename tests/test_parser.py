@@ -85,7 +85,7 @@ def test_page_without_text_is_recorded_in_filter_result() -> None:
                 page=1,
                 text="",
                 tables=(),
-                extraction_error="텍스트 레이어가 없거나 비어 있음",
+                extraction_errors=("텍스트 레이어가 없거나 비어 있음",),
             ),
         ),
     )
@@ -94,6 +94,40 @@ def test_page_without_text_is_recorded_in_filter_result() -> None:
 
     assert result.pages_without_text == (1,)
     assert result.included_count == 0
+
+
+def test_year_only_environment_sentence_is_not_a_numeric_claim() -> None:
+    document = ParsedDocument(
+        path="fixture.pdf",
+        file_hash="sha256:test",
+        total_pages=1,
+        pages=(
+            PageContent(
+                page=1,
+                text="2024년 Scope 1 온실가스 배출 관리 정책을 개정했습니다.",
+                tables=(),
+            ),
+        ),
+    )
+
+    result = prefilter_claim_candidates(document)
+
+    assert result.included_count == 0
+    assert result.excluded_count == 1
+
+
+def test_extracted_tables_preserve_page_coordinates() -> None:
+    document = parse_pdf(
+        REFERENCES / "Samsung_Electronics_Sustainability_Report_2025_ENG.pdf",
+        pages={68},
+    )
+
+    assert document.pages[0].tables
+    assert all(len(table.bbox) == 4 for table in document.pages[0].tables)
+    assert any(
+        any("14,889" in (cell or "") for row in table.rows for cell in row)
+        for table in document.pages[0].tables
+    )
 
 
 @pytest.mark.parametrize("pages", [set(), {0}, {-1}])
