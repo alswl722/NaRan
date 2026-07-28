@@ -10,7 +10,7 @@
     "company_id": "company-samsung-electronics",
     "title": "삼성전자 2025 지속가능경영보고서",
     "reporting_year": 2024,
-    "file_hash": "pending-verification",
+    "file_hash": "sha256:aee5b45480512c05b13b3bfceab1d170232aae847e6ba398b2ebdcab842f7155",
     "source_url": "https://www.samsung.com/global/sustainability/media/pdf/Samsung_Electronics_Sustainability_Report_2025_ENG.pdf"
   },
   "claims": [
@@ -19,21 +19,21 @@
       "report_id": "report-b-2024",
       "claim_type": "실적주장",
       "metric": "온실가스 배출량",
-      "value": null,
-      "unit": "tCO2eq",
+      "value": "14889",
+      "unit": "1000 tCO2eq",
       "value_basis": "절대량",
       "period_start": "2024-01-01",
       "period_end": "2024-12-31",
       "baseline_year": null,
       "target_year": null,
       "scope": "Scope 1+2",
-      "scope2_method": null,
+      "scope2_method": "시장기반",
       "organization_boundary": "연결",
-      "geographic_boundary": "글로벌 전사 제조사업장",
+      "geographic_boundary": "한국 및 해외 제조 자회사",
       "entity_level": "기업",
-      "raw_text": "검증된 보고서 원문과 페이지로 교체 필요",
-      "page": 1,
-      "evidence": "원문 PDF 페이지 확인 대기",
+      "raw_text": "(Market based) GHG emissions — 2024 — 14,889 (1,000 tonnes CO2e)",
+      "page": 68,
+      "evidence": "2025 Sustainability Report p.68 환경성과 표와 p.86 Covered Activities. p.68 각주는 한국 및 해외 제조 자회사를 계산 범위로 명시",
       "confidence": 1.0,
       "extraction_mode": "verified_cache"
     }
@@ -68,18 +68,25 @@
     "comparable": false,
     "conditions": [
       {
-        "field": "geographic_boundary",
-        "status": "불일치",
-        "claim_value": "글로벌 전사 제조사업장",
+      "field": "geographic_boundary",
+      "status": "불일치",
+        "claim_value": "한국 및 해외 제조 자회사",
         "public_value": "대한민국 개별 사업장",
         "reason": "지역 범위가 달라 직접 비교할 수 없음"
       },
       {
-        "field": "entity_level",
+      "field": "entity_level",
         "status": "불일치",
         "claim_value": "기업",
         "public_value": "사업장",
         "reason": "기업 전체와 개별 사업장 데이터임"
+      },
+      {
+        "field": "organization_boundary",
+        "status": "불일치",
+        "claim_value": "연결",
+        "public_value": "개별 사업장",
+        "reason": "제조 자회사 전체와 개별 사업장의 조직경계가 다름"
       }
     ],
     "missing_fields": [],

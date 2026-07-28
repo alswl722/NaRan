@@ -30,3 +30,7 @@ dist/
 *.log
 *.tmp
 *.swp
+tmp/
+
+# Downloaded source documents (keep URLs and hashes in fixtures)
+references/*.pdf
