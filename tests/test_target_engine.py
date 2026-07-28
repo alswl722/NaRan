@@ -262,3 +262,86 @@ def test_target_orchestrator_rejects_claim_from_another_report() -> None:
 
     assert run.state is RunState.FAILED
     assert run.trace[-1].stage == "목표 분석 실패"
+
+
+def test_zero_baseline_stops_instead_of_recording_empty_calculation() -> None:
+    report, claim, baseline, current = target_models()
+    baseline = baseline.model_copy(
+        update={"raw_value": Decimal("0"), "normalized_value": Decimal("0")}
+    )
+
+    run = analyze_reduction_target(
+        run_id="run-zero-baseline",
+        report=report,
+        claim=claim,
+        baseline_fact=baseline,
+        current_fact=current,
+        run_lock=RunLock(),
+    )
+
+    assert run.state is RunState.COMPLETED
+    assert run.outcome is not None
+    assert not run.outcome.trackable
+    assert run.trace[-1].stage == "목표 계산 중단"
+    assert "기준값은 유한한 0보다 큰 값이어야 함" in (
+        run.outcome.mismatch_reasons
+    )
+
+
+def test_known_mismatch_is_preserved_when_value_is_also_missing() -> None:
+    report, claim, baseline, current = target_models()
+    baseline = baseline.model_copy(
+        update={"raw_value": None, "normalized_value": None}
+    )
+    current = current.model_copy(update={"company_id": "another-company"})
+
+    outcome = evaluate_target_progress(
+        claim,
+        baseline,
+        current,
+        claim_company_id=report.company_id,
+    )
+
+    assert "baseline_value" in outcome.missing_fields
+    assert "현재 데이터의 회사가 다름" in outcome.mismatch_reasons
+    assert outcome.progress.readiness == "목표 추적 조건 불일치"
+
+
+def test_normalized_tonne_units_are_compatible() -> None:
+    report, claim, baseline, current = target_models()
+    baseline = baseline.model_copy(
+        update={
+            "raw_value": Decimal("0.1"),
+            "normalized_value": Decimal("100"),
+            "unit": "1000 tCO2eq",
+        }
+    )
+
+    outcome = evaluate_target_progress(
+        claim,
+        baseline,
+        current,
+        claim_company_id=report.company_id,
+    )
+
+    assert outcome.trackable
+    assert outcome.progress.actual_reduction_pct == Decimal("20")
+
+
+def test_annual_path_outside_target_period_is_rejected() -> None:
+    report, claim, baseline, current = target_models()
+
+    outcome = evaluate_target_progress(
+        claim,
+        baseline,
+        current,
+        claim_company_id=report.company_id,
+        published_annual_path=[
+            {"year": 2031, "value": Decimal("60")},
+        ],
+    )
+
+    assert not outcome.trackable
+    assert "연차 경로가 기준연도·목표연도 범위를 벗어남" in (
+        outcome.mismatch_reasons
+    )
