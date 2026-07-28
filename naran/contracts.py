@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
@@ -11,6 +11,20 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class ContractModel(BaseModel):
     model_config = ConfigDict(extra="forbid", use_enum_values=False)
+
+
+def _validate_period_pair(start: str | None, end: str | None) -> None:
+    if (start is None) != (end is None):
+        raise ValueError("period_start와 period_end는 함께 존재하거나 함께 null이어야 합니다")
+    if start is None or end is None:
+        return
+    try:
+        start_date = date.fromisoformat(start)
+        end_date = date.fromisoformat(end)
+    except ValueError as exc:
+        raise ValueError("보고기간은 YYYY-MM-DD 형식의 유효한 날짜여야 합니다") from exc
+    if start_date > end_date:
+        raise ValueError("period_start는 period_end보다 늦을 수 없습니다")
 
 
 class ClaimType(StrEnum):
@@ -135,6 +149,11 @@ class Claim(ContractModel):
     confidence: float = Field(ge=0, le=1)
     extraction_mode: ExecutionMode
 
+    @model_validator(mode="after")
+    def validate_period(self) -> "Claim":
+        _validate_period_pair(self.period_start, self.period_end)
+        return self
+
 
 class PublicFact(ContractModel):
     id: str
@@ -164,6 +183,23 @@ class PublicFact(ContractModel):
     def preserve_value_pair(self) -> "PublicFact":
         if (self.raw_value is None) != (self.normalized_value is None):
             raise ValueError("raw_value와 normalized_value는 함께 존재하거나 함께 null이어야 합니다")
+        if self.raw_value is not None and self.normalized_value is not None:
+            multipliers = {
+                "tCO2eq": Decimal("1"),
+                "1000 tCO2eq": Decimal("1000"),
+            }
+            multiplier = multipliers.get(self.unit or "", Decimal("1"))
+            if self.normalized_value != self.raw_value * multiplier:
+                raise ValueError("normalized_value가 raw_value와 단위 환산 결과에 일치하지 않습니다")
+        if self.display_rule not in {
+            None,
+            "반올림",
+            "round_half_up",
+            "절사",
+            "truncate",
+        }:
+            raise ValueError("지원하지 않는 display_rule입니다")
+        _validate_period_pair(self.period_start, self.period_end)
         return self
 
 

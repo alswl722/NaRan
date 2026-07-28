@@ -93,16 +93,19 @@ def _mapping_permits_alignment(
     mapping: EntityMapping | None,
     claim: Claim,
     public_fact: PublicFact,
+    claim_company_id: str | None,
 ) -> bool:
     year = _reporting_year(claim, public_fact)
     source_system = _source_system_for(public_fact)
     return bool(
         mapping is not None
+        and claim_company_id is not None
         and year is not None
         and source_system is not None
         and mapping.source_system is source_system
         and mapping.source_entity_id == public_fact.site_id
         and mapping.company_id == public_fact.company_id
+        and mapping.company_id == claim_company_id
         and mapping.permits_boundary_alignment(year)
     )
 
@@ -159,6 +162,7 @@ def check_comparability(
     public_fact: PublicFact,
     *,
     boundary_mapping: EntityMapping | None = None,
+    claim_company_id: str | None = None,
 ) -> ComparabilityResult:
     """조건별 결과를 반환하며 수치 차이는 계산하지 않는다."""
 
@@ -168,7 +172,7 @@ def check_comparability(
         and claim.period_end == public_fact.period_end
     )
     boundary_alignment_verified = _mapping_permits_alignment(
-        boundary_mapping, claim, public_fact
+        boundary_mapping, claim, public_fact, claim_company_id
     )
 
     conditions = [

@@ -218,7 +218,7 @@
     "mismatch_reasons": []
   },
   "expected_verdict": {
-    "status": "일치",
+    "status": "설명 가능성 있음",
     "match_type": "precision_compatible",
     "claim_raw_value": "71840.290",
     "public_raw_value": "71840",
@@ -227,9 +227,9 @@
     "absolute_difference": "0.290",
     "relative_difference_pct": null,
     "explanation": "표시 정밀도 범위 내 정합; 출처의 표시 규칙은 미확인",
-    "review_required": false,
-    "review_reasons": [],
-    "follow_up_question": null
+    "review_required": true,
+    "review_reasons": ["출처의 수치 표시 규칙 확인 필요"],
+    "follow_up_question": "공개 수치의 반올림 또는 절사 기준을 확인해 주세요."
   },
   "monitoring_case": {
     "id": "case-a",

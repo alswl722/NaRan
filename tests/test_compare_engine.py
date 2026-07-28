@@ -15,6 +15,7 @@ from naran.contracts import AnalysisStatus, Claim, MatchType, PublicFact
 
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
+CASE_A_COMPANY_ID = "company-samsung-biologics"
 
 
 def load(name: str) -> dict:
@@ -61,10 +62,12 @@ def test_case_a_scope1_is_precision_compatible() -> None:
         claim,
         fact,
         boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
-    assert outcome.verdict.status is AnalysisStatus.MATCH
+    assert outcome.verdict.status is AnalysisStatus.POSSIBLY_EXPLAINED
     assert outcome.verdict.match_type is MatchType.PRECISION_COMPATIBLE
+    assert outcome.verdict.review_required
     assert outcome.verdict.absolute_difference == Decimal("0.290")
     assert "표시 규칙은 미확인" in outcome.verdict.explanation
     assert outcome.verdict.model_dump(mode="json") == case["expected_verdict"]
@@ -77,10 +80,12 @@ def test_case_a_scope2_is_precision_compatible_at_integer_display() -> None:
         claim,
         fact,
         boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
-    assert outcome.verdict.status is AnalysisStatus.MATCH
+    assert outcome.verdict.status is AnalysisStatus.POSSIBLY_EXPLAINED
     assert outcome.verdict.match_type is MatchType.PRECISION_COMPATIBLE
+    assert outcome.verdict.review_required
     assert outcome.verdict.absolute_difference == Decimal("0.011")
 
 
@@ -97,6 +102,7 @@ def test_confirmed_rounding_boundary_is_applied() -> None:
         Claim.model_validate(claim_data),
         PublicFact.model_validate(fact_data),
         boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
     assert outcome.verdict.match_type is MatchType.PRECISION_COMPATIBLE
@@ -116,6 +122,7 @@ def test_value_outside_precision_boundary_is_different() -> None:
         Claim.model_validate(claim_data),
         PublicFact.model_validate(fact_data),
         boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
     assert outcome.verdict.match_type is MatchType.DIFFERENT
@@ -177,11 +184,62 @@ def test_confirmed_difference_evidence_changes_status_without_llm_calculation() 
         fact,
         difference_evidence=DifferenceEvidence.CONFIRMED,
         evidence_note="보고서에서 조직변동에 따른 재산정을 명시함",
+        evidence_source="report-c-2024:p.1",
     )
 
     assert outcome.verdict.status is AnalysisStatus.EXPLAINED_DIFFERENCE
     assert not outcome.verdict.review_required
     assert outcome.verdict.follow_up_question is None
+    assert "report-c-2024:p.1" in outcome.verdict.explanation
+
+
+def test_confirmed_difference_requires_description_and_source() -> None:
+    _, claim, fact = models("sample_case_c.json")
+
+    with pytest.raises(ValueError, match="설명과 출처"):
+        compare_performance(
+            claim,
+            fact,
+            difference_evidence=DifferenceEvidence.CONFIRMED,
+            evidence_note="조직변동",
+        )
+
+
+def test_evidence_metadata_is_rejected_when_evidence_is_none() -> None:
+    _, claim, fact = models("sample_case_c.json")
+
+    with pytest.raises(ValueError, match="지정할 수 없습니다"):
+        compare_performance(claim, fact, evidence_note="근거 없는 설명")
+
+
+def test_public_normalized_value_must_match_raw_value_and_unit() -> None:
+    _, _, fact = models("sample_case_c.json")
+    fact_data = fact.model_dump(mode="json")
+    fact_data["normalized_value"] = "999"
+
+    with pytest.raises(ValueError, match="단위 환산 결과"):
+        PublicFact.model_validate(fact_data)
+
+
+def test_unknown_display_rule_is_rejected() -> None:
+    _, _, fact = models("sample_case_c.json")
+    fact_data = fact.model_dump(mode="json")
+    fact_data["display_rule"] = "대충 반올림"
+
+    with pytest.raises(ValueError, match="display_rule"):
+        PublicFact.model_validate(fact_data)
+
+
+def test_noncomparable_input_stops_before_evidence_validation() -> None:
+    _, claim, fact = models("sample_case_b.json")
+
+    outcome = compare_performance(
+        claim,
+        fact,
+        difference_evidence=DifferenceEvidence.CONFIRMED,
+    )
+
+    assert outcome.verdict.status is AnalysisStatus.NOT_COMPARABLE
 
 
 def test_reduction_target_is_rejected_by_performance_engine() -> None:
@@ -227,3 +285,16 @@ def test_published_path_allows_deterministic_track_status() -> None:
 
     assert progress.on_track is True
     assert progress.plan_gap == Decimal("-1")
+
+
+def test_duplicate_year_in_published_path_is_rejected() -> None:
+    with pytest.raises(ValueError, match="중복 연도"):
+        calculate_target_progress(
+            baseline_value=Decimal("100"),
+            current_value=Decimal("80"),
+            published_annual_path=[
+                {"year": 2024, "value": Decimal("80")},
+                {"year": 2024, "value": Decimal("70")},
+            ],
+            current_year=2024,
+        )

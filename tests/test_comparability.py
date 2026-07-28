@@ -22,6 +22,7 @@ from naran.contracts import (
 
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
+CASE_A_COMPANY_ID = "company-samsung-biologics"
 
 
 def load(name: str) -> dict:
@@ -53,6 +54,7 @@ def test_case_a_is_fully_comparable() -> None:
         case["claims"][0],
         case["public_facts"][0],
         boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
     assert result.comparable
@@ -78,6 +80,7 @@ def test_explicit_mapping_can_align_differently_labelled_boundary() -> None:
         case["claims"][0],
         case["public_facts"][0],
         boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
     assert result.comparable
@@ -102,10 +105,34 @@ def test_unrelated_mapping_cannot_bypass_boundary_checks() -> None:
         case["claims"][0],
         case["public_facts"][0],
         boundary_mapping=unrelated,
+        claim_company_id=CASE_A_COMPANY_ID,
     )
 
     assert not result.comparable
     assert "기업과 사업장 단위가 다름" in result.mismatch_reasons
+
+
+def test_mapping_cannot_align_claim_from_another_company() -> None:
+    case = load("sample_case_a.json")
+
+    result = result_for(
+        case["claims"][0],
+        case["public_facts"][0],
+        boundary_mapping=case_a_mapping(),
+        claim_company_id="company-unrelated",
+    )
+
+    assert not result.comparable
+    assert "기업과 사업장 단위가 다름" in result.mismatch_reasons
+
+
+def test_invalid_period_is_rejected_at_contract_boundary() -> None:
+    case = load("sample_case_a.json")
+    claim = deepcopy(case["claims"][0])
+    claim["period_start"] = "2024-99-01"
+
+    with pytest.raises(ValueError, match="유효한 날짜"):
+        Claim.model_validate(claim)
 
 
 @pytest.mark.parametrize(
@@ -114,7 +141,7 @@ def test_unrelated_mapping_cannot_bypass_boundary_checks() -> None:
         ("organization_boundary", "연결", "조직경계가 다름"),
         ("geographic_boundary", "글로벌", "지역경계가 다름"),
         ("scope", "Scope 2", "Scope 범위가 다름"),
-        ("period_end", "2023-12-31", "보고기간이 다름"),
+        ("period_end", "2025-12-31", "보고기간이 다름"),
         ("value_basis", "원단위", "절대량과 원단위 기준이 다름"),
     ],
 )
@@ -164,7 +191,12 @@ def test_missing_numeric_value_stops_comparison(side: str, field: str) -> None:
         fact["raw_value"] = None
         fact["normalized_value"] = None
 
-    result = result_for(claim, fact, boundary_mapping=case_a_mapping())
+    result = result_for(
+        claim,
+        fact,
+        boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
+    )
 
     assert not result.comparable
     assert "value" in result.missing_fields
@@ -199,7 +231,14 @@ def test_compatible_tonne_units_are_not_a_mismatch() -> None:
 )
 def test_fixture_comparability_summary_matches_engine(name: str) -> None:
     case = load(name)
-    kwargs = {"boundary_mapping": case_a_mapping()} if name.endswith("_a.json") else {}
+    kwargs = (
+        {
+            "boundary_mapping": case_a_mapping(),
+            "claim_company_id": CASE_A_COMPANY_ID,
+        }
+        if name.endswith("_a.json")
+        else {}
+    )
     result = result_for(case["claims"][0], case["public_facts"][0], **kwargs)
     expected = ComparabilityResult.model_validate(case["comparability"])
 

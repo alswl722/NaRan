@@ -170,8 +170,10 @@ def compare_performance(
     public_fact: PublicFact,
     *,
     boundary_mapping: EntityMapping | None = None,
+    claim_company_id: str | None = None,
     difference_evidence: DifferenceEvidence = DifferenceEvidence.NONE,
     evidence_note: str | None = None,
+    evidence_source: str | None = None,
 ) -> ComparisonOutcome:
     if claim.claim_type is not ClaimType.PERFORMANCE:
         raise ValueError("실적주장만 compare_performance로 대조할 수 있습니다")
@@ -179,6 +181,7 @@ def compare_performance(
         claim,
         public_fact,
         boundary_mapping=boundary_mapping,
+        claim_company_id=claim_company_id,
     )
     if not comparability.comparable:
         status = stop_status(comparability)
@@ -197,6 +200,7 @@ def compare_performance(
             reasons = [
                 reason
                 for field, reason in (
+                    ("entity_level", "기업·사업장 단위 불일치"),
                     ("organization_boundary", "조직경계 불일치"),
                     ("geographic_boundary", "지역경계 불일치"),
                 )
@@ -219,6 +223,17 @@ def compare_performance(
             follow_up_question=follow_up,
         )
         return ComparisonOutcome(comparability=comparability, verdict=verdict)
+
+    if difference_evidence is DifferenceEvidence.NONE:
+        if evidence_note is not None or evidence_source is not None:
+            raise ValueError("차이 근거가 없을 때 근거 설명이나 출처를 지정할 수 없습니다")
+    elif (
+        not evidence_note
+        or not evidence_note.strip()
+        or not evidence_source
+        or not evidence_source.strip()
+    ):
+        raise ValueError("차이 근거가 있으면 근거 설명과 출처가 모두 필요합니다")
 
     claim_multiplier, public_multiplier = _unit_multipliers(comparability)
     normalized_unit = next(
@@ -259,8 +274,18 @@ def compare_performance(
         public_fact.display_rule,
     )
     if compatible:
+        display_rule_confirmed = public_fact.display_rule in {
+            "반올림",
+            "round_half_up",
+            "절사",
+            "truncate",
+        }
         verdict = Verdict(
-            status=AnalysisStatus.MATCH,
+            status=(
+                AnalysisStatus.MATCH
+                if display_rule_confirmed
+                else AnalysisStatus.POSSIBLY_EXPLAINED
+            ),
             match_type=MatchType.PRECISION_COMPATIBLE,
             claim_raw_value=claim.value,
             public_raw_value=public_fact.raw_value,
@@ -269,7 +294,15 @@ def compare_performance(
             absolute_difference=difference,
             relative_difference_pct=None,
             explanation=precision_explanation,
-            review_required=False,
+            review_required=not display_rule_confirmed,
+            review_reasons=(
+                [] if display_rule_confirmed else ["출처의 수치 표시 규칙 확인 필요"]
+            ),
+            follow_up_question=(
+                None
+                if display_rule_confirmed
+                else "공개 수치의 반올림 또는 절사 기준을 확인해 주세요."
+            ),
         )
         return ComparisonOutcome(comparability=comparability, verdict=verdict)
 
@@ -281,7 +314,11 @@ def compare_performance(
         public_normalized=public_normalized,
         normalized_unit=normalized_unit,
         evidence=difference_evidence,
-        evidence_note=evidence_note,
+        evidence_note=(
+            f"{evidence_note} (근거: {evidence_source})"
+            if evidence_note is not None and evidence_source is not None
+            else None
+        ),
     )
     return ComparisonOutcome(comparability=comparability, verdict=verdict)
 
@@ -293,6 +330,24 @@ def calculate_target_progress(
     published_annual_path: list[dict[str, Decimal | int]] | None = None,
     current_year: int | None = None,
 ) -> TargetProgress:
+    if baseline_value is not None and baseline_value < 0:
+        raise ValueError("기준값은 음수일 수 없습니다")
+    if current_value is not None and current_value < 0:
+        raise ValueError("현재값은 음수일 수 없습니다")
+    if published_annual_path:
+        years: set[int] = set()
+        for point in published_annual_path:
+            if set(point) != {"year", "value"}:
+                raise ValueError("연차 경로 항목에는 year와 value만 있어야 합니다")
+            year = point["year"]
+            value = Decimal(str(point["value"]))
+            if not isinstance(year, int) or isinstance(year, bool):
+                raise ValueError("연차 경로의 year는 정수여야 합니다")
+            if year in years:
+                raise ValueError("연차 경로에 중복 연도가 있습니다")
+            if value < 0:
+                raise ValueError("연차 경로의 목표값은 음수일 수 없습니다")
+            years.add(year)
     if baseline_value is None or current_value is None:
         return TargetProgress(readiness="기준값 또는 현재값 부족")
     if baseline_value == 0:

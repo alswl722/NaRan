@@ -161,7 +161,11 @@
     "relative_difference_pct": null,
     "explanation": "조직 및 지역 범위가 달라 계산을 중단함",
     "review_required": true,
-    "review_reasons": ["조직경계 불일치", "지역경계 불일치"],
+    "review_reasons": [
+      "기업·사업장 단위 불일치",
+      "조직경계 불일치",
+      "지역경계 불일치"
+    ],
     "follow_up_question": "동일한 조직·지역 범위의 배출량 자료를 제출해 주세요."
   },
   "monitoring_case": {
