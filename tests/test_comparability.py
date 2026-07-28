@@ -193,7 +193,10 @@ def test_compatible_tonne_units_are_not_a_mismatch() -> None:
     assert unit_condition.public_unit_multiplier == 1
 
 
-@pytest.mark.parametrize("name", ["sample_case_a.json", "sample_case_b.json"])
+@pytest.mark.parametrize(
+    "name",
+    ["sample_case_a.json", "sample_case_b.json", "sample_case_c.json"],
+)
 def test_fixture_comparability_summary_matches_engine(name: str) -> None:
     case = load(name)
     kwargs = {"boundary_mapping": case_a_mapping()} if name.endswith("_a.json") else {}

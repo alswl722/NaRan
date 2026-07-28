@@ -226,7 +226,7 @@
     "public_normalized_value": "71840",
     "absolute_difference": "0.290",
     "relative_difference_pct": null,
-    "explanation": "표시 정밀도 범위 내 정합",
+    "explanation": "표시 정밀도 범위 내 정합; 출처의 표시 규칙은 미확인",
     "review_required": false,
     "review_reasons": [],
     "follow_up_question": null
