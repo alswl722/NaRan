@@ -59,6 +59,8 @@ def test_case_a_verified_report_evidence() -> None:
     assert claims["Scope 2"]["value"] == "154678.989"
     assert claims["Scope 2"]["scope2_method"] == "배출권거래제 기준"
     assert claims["Scope 2"]["page"] == 172
+    assert claims["Scope 1+2"]["value"] == "226519"
+    assert claims["Scope 1+2"]["page"] == 220
     assert all(claim["organization_boundary"] == "별도" for claim in case["claims"])
 
 

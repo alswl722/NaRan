@@ -137,6 +137,25 @@ DEFAULT_ENTITY_MAP = EntityMap(
             ),
         ),
         EntityMapping(
+            source_system=SourceSystem.GIR,
+            source_entity_id="gir-samsung-biologics-2024",
+            company_id="company-samsung-biologics",
+            source_entity_name="삼성바이오로직스 주식회사",
+            status=MappingStatus.VERIFIED,
+            boundary_coverage=BoundaryCoverage.EXACT,
+            valid_from_year=2024,
+            valid_to_year=2024,
+            evidence=(
+                "GIR 2024 명세서 통계는 법인명을 삼성바이오로직스 주식회사로 명시",
+                "GIR 총량 226,519tCO2eq가 보고서 p.220 검증 총량과 일치",
+                "GIR과 보고서 검증보고서의 검증수행기관이 대일이엔씨기술㈜로 일치",
+            ),
+            note=(
+                "2024년 GIR 명세서 총량과 보고서 검증 범위의 법인·기간·"
+                "검증기관을 함께 확인한 명시적 매핑"
+            ),
+        ),
+        EntityMapping(
             source_system=SourceSystem.ENV_INFO,
             source_entity_id="00000000000000095329",
             company_id="company-samsung-electronics",

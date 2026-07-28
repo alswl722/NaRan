@@ -61,6 +61,29 @@
       "evidence": "2025 ESG 보고서 p.172 비재무 성과 표 및 p.220 온실가스 검증보고서",
       "confidence": 1.0,
       "extraction_mode": "verified_cache"
+    },
+    {
+      "id": "claim-a-scope1-2-total",
+      "report_id": "report-a-2024",
+      "claim_type": "실적주장",
+      "metric": "온실가스 배출량",
+      "value": "226519",
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "baseline_year": null,
+      "target_year": null,
+      "scope": "Scope 1+2",
+      "scope2_method": "배출권거래제 기준",
+      "organization_boundary": "별도",
+      "geographic_boundary": "대한민국 국내 사업장",
+      "entity_level": "기업",
+      "raw_text": "2024년 국내 사업장 온실가스 배출량 합계(Scope 1+2)는 226,519tCO2eq입니다.",
+      "page": 220,
+      "evidence": "2025 ESG 보고서 p.220 온실가스 검증보고서",
+      "confidence": 1.0,
+      "extraction_mode": "verified_cache"
     }
   ],
   "public_facts": [
@@ -115,7 +138,7 @@
     {
       "id": "fact-a-scope1-2-gir",
       "company_id": "company-samsung-biologics",
-      "site_id": null,
+      "site_id": "gir-samsung-biologics-2024",
       "entity_level": "사업장",
       "metric": "온실가스 배출량",
       "raw_value": "226519",

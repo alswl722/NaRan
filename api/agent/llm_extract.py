@@ -129,6 +129,27 @@ class VerifiedClaimCache:
             return None
         return tuple(claim.model_copy(deep=True) for claim in claims)
 
+    def pages_for(
+        self,
+        *,
+        document_hash: str,
+        report_id: str,
+        model_name: str = DEFAULT_MODEL,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
+        schema_version: str = DEFAULT_SCHEMA_VERSION,
+    ) -> tuple[int, ...]:
+        return tuple(
+            sorted(
+                key.page
+                for key in self._entries
+                if key.document_hash == document_hash
+                and key.report_id == report_id
+                and key.model_name == model_name
+                and key.prompt_version == prompt_version
+                and key.schema_version == schema_version
+            )
+        )
+
     @classmethod
     def from_fixture_directory(
         cls,
