@@ -126,6 +126,24 @@ def test_mapping_cannot_align_claim_from_another_company() -> None:
     assert "기업과 사업장 단위가 다름" in result.mismatch_reasons
 
 
+def test_spoofed_source_hostname_cannot_activate_mapping() -> None:
+    case = load("sample_case_a.json")
+    fact = deepcopy(case["public_facts"][0])
+    fact["source_url"] = (
+        "https://evil-env-info.kr/user/register/viewUserSearch2.do"
+    )
+
+    result = result_for(
+        case["claims"][0],
+        fact,
+        boundary_mapping=case_a_mapping(),
+        claim_company_id=CASE_A_COMPANY_ID,
+    )
+
+    assert not result.comparable
+    assert "기업과 사업장 단위가 다름" in result.mismatch_reasons
+
+
 def test_invalid_period_is_rejected_at_contract_boundary() -> None:
     case = load("sample_case_a.json")
     claim = deepcopy(case["claims"][0])

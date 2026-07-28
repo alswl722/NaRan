@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from urllib.parse import urlparse
 
 from naran.contracts import (
     AnalysisStatus,
@@ -74,9 +75,10 @@ def _units_compatible(claim_unit: str | None, public_unit: str | None) -> bool:
 
 
 def _source_system_for(public_fact: PublicFact) -> SourceSystem | None:
-    if "env-info.kr/" in public_fact.source_url:
+    hostname = urlparse(public_fact.source_url).hostname
+    if hostname in {"env-info.kr", "www.env-info.kr"}:
         return SourceSystem.ENV_INFO
-    if "gir.go.kr/" in public_fact.source_url:
+    if hostname in {"gir.go.kr", "www.gir.go.kr"}:
         return SourceSystem.GIR
     return None
 

@@ -183,7 +183,8 @@ def compare_performance(
     )
     if not comparability.comparable:
         status = stop_status(comparability)
-        assert status is not None
+        if status is None:
+            raise RuntimeError("비교 불가 결과에 중단 상태가 없습니다")
         mismatch_fields = {
             condition.field
             for condition in comparability.conditions
@@ -241,8 +242,8 @@ def compare_performance(
     )
     if normalized_unit is None:
         raise ValueError("비교 가능한 결과에 정규화 단위가 없습니다")
-    assert claim.value is not None
-    assert public_fact.raw_value is not None
+    if claim.value is None or public_fact.raw_value is None:
+        raise RuntimeError("비교 가능한 결과에 수치가 없습니다")
     claim_normalized = claim.value * claim_multiplier
     public_normalized = public_fact.raw_value * public_multiplier
     difference = abs(public_normalized - claim_normalized)

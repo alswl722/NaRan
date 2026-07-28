@@ -126,3 +126,48 @@ def test_target_progress_cannot_invent_annual_path() -> None:
                 "on_track": True,
             }
         )
+
+
+def test_target_progress_cannot_store_plan_gap_without_path() -> None:
+    with pytest.raises(ValidationError, match="연차 경로 없이"):
+        TargetProgress.model_validate(
+            {
+                "readiness": "잘못된 결과",
+                "plan_gap": "1",
+            }
+        )
+
+
+def test_match_status_requires_match_type() -> None:
+    with pytest.raises(ValidationError, match="exact 또는"):
+        Verdict.model_validate(
+            {
+                "status": "일치",
+                "explanation": "유형이 누락된 잘못된 결과",
+                "review_required": False,
+            }
+        )
+
+
+def test_review_required_verdict_requires_follow_up_question() -> None:
+    verdict = load("sample_case_c.json")["expected_verdict"]
+    verdict["follow_up_question"] = None
+
+    with pytest.raises(ValidationError, match="후속 확인 질문"):
+        Verdict.model_validate(verdict)
+
+
+def test_comparability_summary_must_match_conditions() -> None:
+    result = load("sample_case_b.json")["comparability"]
+    result["missing_fields"] = []
+
+    with pytest.raises(ValidationError, match="missing_fields"):
+        ComparabilityResult.model_validate(result)
+
+
+def test_public_fact_retrieval_time_requires_timezone() -> None:
+    fact = load("sample_case_b.json")["public_facts"][0]
+    fact["retrieved_at"] = "2026-07-28T00:00:00"
+
+    with pytest.raises(ValidationError, match="시간대"):
+        PublicFact.model_validate(fact)

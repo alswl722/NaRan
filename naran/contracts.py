@@ -199,6 +199,8 @@ class PublicFact(ContractModel):
             "truncate",
         }:
             raise ValueError("지원하지 않는 display_rule입니다")
+        if self.retrieved_at.tzinfo is None:
+            raise ValueError("retrieved_at에는 시간대가 필요합니다")
         _validate_period_pair(self.period_start, self.period_end)
         return self
 
@@ -222,6 +224,24 @@ class ComparabilityResult(ContractModel):
 
     @model_validator(mode="after")
     def enforce_stop_reasons(self) -> "ComparabilityResult":
+        fields = [condition.field for condition in self.conditions]
+        if len(fields) != len(set(fields)):
+            raise ValueError("비교 가능성 조건 필드는 중복될 수 없습니다")
+        derived_missing = [
+            condition.field
+            for condition in self.conditions
+            if condition.status is ConditionStatus.MISSING
+        ]
+        derived_mismatches = [
+            condition.reason
+            for condition in self.conditions
+            if condition.status is ConditionStatus.MISMATCH
+            and condition.reason is not None
+        ]
+        if self.missing_fields != derived_missing:
+            raise ValueError("missing_fields가 조건별 누락 결과와 일치하지 않습니다")
+        if self.mismatch_reasons != derived_mismatches:
+            raise ValueError("mismatch_reasons가 조건별 불일치 결과와 일치하지 않습니다")
         has_problem = bool(self.missing_fields or self.mismatch_reasons)
         if self.comparable and has_problem:
             raise ValueError("비교 가능한 결과에는 누락 또는 불일치 사유가 있을 수 없습니다")
@@ -246,10 +266,11 @@ class Verdict(ContractModel):
 
     @model_validator(mode="after")
     def forbid_calculation_when_stopped(self) -> "Verdict":
-        if self.status in {
+        stopped = self.status in {
             AnalysisStatus.NOT_COMPARABLE,
             AnalysisStatus.INSUFFICIENT_INFORMATION,
-        } and any(
+        }
+        if stopped and any(
             value is not None
             for value in (
                 self.absolute_difference,
@@ -259,6 +280,62 @@ class Verdict(ContractModel):
             )
         ):
             raise ValueError("비교 불가 또는 정보 부족 상태에서는 비교 계산값을 저장할 수 없습니다")
+        if stopped and (self.match_type is not None or not self.review_required):
+            raise ValueError("비교 중단 상태는 match_type 없이 사람 검토가 필요합니다")
+
+        if self.match_type is MatchType.EXACT and (
+            self.status is not AnalysisStatus.MATCH or self.review_required
+        ):
+            raise ValueError("exact 일치는 검토가 필요하지 않은 일치 상태여야 합니다")
+        if self.match_type is MatchType.PRECISION_COMPATIBLE:
+            allowed = {
+                AnalysisStatus.MATCH,
+                AnalysisStatus.POSSIBLY_EXPLAINED,
+            }
+            if self.status not in allowed:
+                raise ValueError("정밀도 정합에 허용되지 않는 분석 상태입니다")
+            if (
+                self.status is AnalysisStatus.POSSIBLY_EXPLAINED
+                and not self.review_required
+            ):
+                raise ValueError("표시 규칙 미확인 상태는 사람 검토가 필요합니다")
+        if self.match_type is MatchType.DIFFERENT:
+            allowed = {
+                AnalysisStatus.EXPLAINED_DIFFERENCE,
+                AnalysisStatus.POSSIBLY_EXPLAINED,
+                AnalysisStatus.UNEXPLAINED_DIFFERENCE,
+            }
+            if self.status not in allowed:
+                raise ValueError("수치 차이에 허용되지 않는 분석 상태입니다")
+            required_values = (
+                self.claim_raw_value,
+                self.public_raw_value,
+                self.claim_normalized_value,
+                self.public_normalized_value,
+                self.absolute_difference,
+            )
+            if any(value is None for value in required_values):
+                raise ValueError("수치 차이 판정에는 원본·정규화값·절대 차이가 필요합니다")
+            should_review = self.status is not AnalysisStatus.EXPLAINED_DIFFERENCE
+            if self.review_required != should_review:
+                raise ValueError("차이 상태와 사람 검토 라우팅이 일치하지 않습니다")
+        if self.status is AnalysisStatus.MATCH and self.match_type not in {
+            MatchType.EXACT,
+            MatchType.PRECISION_COMPATIBLE,
+        }:
+            raise ValueError("일치 상태에는 exact 또는 precision-compatible 유형이 필요합니다")
+        if self.status in {
+            AnalysisStatus.EXPLAINED_DIFFERENCE,
+            AnalysisStatus.UNEXPLAINED_DIFFERENCE,
+        } and self.match_type is not MatchType.DIFFERENT:
+            raise ValueError("차이 상태에는 different 유형이 필요합니다")
+        for value in (self.absolute_difference, self.relative_difference_pct):
+            if value is not None and (not value.is_finite() or value < 0):
+                raise ValueError("차이값은 유한한 0 이상의 값이어야 합니다")
+        if self.review_required and not self.follow_up_question:
+            raise ValueError("사람 검토가 필요하면 후속 확인 질문이 필요합니다")
+        if not self.review_required and self.follow_up_question is not None:
+            raise ValueError("검토가 필요하지 않은 결과에는 후속 질문을 저장할 수 없습니다")
         return self
 
 
@@ -273,8 +350,16 @@ class TargetProgress(ContractModel):
 
     @model_validator(mode="after")
     def require_published_path_for_track_status(self) -> "TargetProgress":
-        if self.on_track is not None and not self.published_annual_path:
-            raise ValueError("공개된 연차 경로 없이 on_track을 생성할 수 없습니다")
+        if (
+            self.on_track is not None or self.plan_gap is not None
+        ) and not self.published_annual_path:
+            raise ValueError("공개된 연차 경로 없이 계획 대비 결과를 생성할 수 없습니다")
+        if self.on_track is not None and self.plan_gap is None:
+            raise ValueError("on_track에는 plan_gap이 함께 필요합니다")
+        if self.actual_reduction_pct is not None and (
+            self.baseline_value is None or self.current_value is None
+        ):
+            raise ValueError("실제 감축률에는 기준값과 현재값이 필요합니다")
         return self
 
 
@@ -285,6 +370,12 @@ class TraceEvent(ContractModel):
     input_summary: str
     evidence: list[str] = Field(default_factory=list)
     created_at: datetime
+
+    @model_validator(mode="after")
+    def require_timezone(self) -> "TraceEvent":
+        if self.created_at.tzinfo is None:
+            raise ValueError("트레이스 시각에는 시간대가 필요합니다")
+        return self
 
 
 class HumanReview(ContractModel):
