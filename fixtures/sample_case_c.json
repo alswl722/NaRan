@@ -158,7 +158,7 @@
     "explanation": "동일한 비교 조건에서 차이가 발생했으며 공개된 설명 근거가 없음",
     "review_required": true,
     "review_reasons": ["동일 범위 수치 간 설명되지 않은 차이"],
-    "follow_up_question": "동일한 2024년 국내 사업장 Scope 1+2 배출량 간 25,000tCO2eq 차이가 발생한 원인과 산정 근거를 제출해 주세요."
+    "follow_up_question": "동일한 2024년 국내 사업장 Scope 1+2 온실가스 배출량 간 25,000tCO2eq 차이가 발생한 원인과 산정 근거를 제출해 주세요."
   },
   "monitoring_case": {
     "id": "case-c",

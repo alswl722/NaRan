@@ -204,15 +204,15 @@ def compare_performance(
                 )
                 if field in mismatch_fields
             ]
-            follow_up = question_for_stopped_comparison(comparability)
+            follow_up = question_for_stopped_comparison(claim, comparability)
         elif status is AnalysisStatus.NOT_COMPARABLE:
             explanation = "비교 조건이 달라 계산을 중단함"
             reasons = comparability.mismatch_reasons
-            follow_up = question_for_stopped_comparison(comparability)
+            follow_up = question_for_stopped_comparison(claim, comparability)
         else:
             explanation = "비교에 필요한 정보가 부족하여 계산을 중단함"
             reasons = comparability.missing_fields
-            follow_up = question_for_stopped_comparison(comparability)
+            follow_up = question_for_stopped_comparison(claim, comparability)
         verdict = Verdict(
             status=status,
             explanation=explanation,
