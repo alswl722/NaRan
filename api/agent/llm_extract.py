@@ -24,7 +24,7 @@ from naran.contracts import (
 )
 
 
-DEFAULT_MODEL = "gemini-structured-output"
+DEFAULT_MODEL = "gemini-2.5-flash"
 DEFAULT_PROMPT_VERSION = "claim-extract-v1"
 DEFAULT_SCHEMA_VERSION = "claim-draft-v1"
 
@@ -90,6 +90,14 @@ class ClaimCacheKey:
 
 
 class StructuredClaimClient(Protocol):
+    @property
+    def model_name(self) -> str:
+        ...
+
+    @property
+    def prompt_version(self) -> str:
+        ...
+
     def extract(
         self,
         *,
@@ -263,6 +271,10 @@ def extract_claims(
         raise ValueError("fallback은 live 실패 결과로만 생성할 수 있습니다")
     if client is None:
         raise ExtractionUnavailableError("live 실행에 structured output client가 필요합니다")
+    if client.model_name != model_name:
+        raise ValueError("client 모델명과 캐시 키 모델명이 일치하지 않습니다")
+    if client.prompt_version != prompt_version:
+        raise ValueError("client 프롬프트 버전과 캐시 키 버전이 일치하지 않습니다")
     if not candidate_texts:
         raise ExtractionUnavailableError("live 추출에 사용할 주장 후보가 없습니다")
 

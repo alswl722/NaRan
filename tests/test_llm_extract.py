@@ -28,10 +28,18 @@ def cache() -> VerifiedClaimCache:
 
 
 class SequenceClient:
-    def __init__(self, responses: list[str | Exception]) -> None:
+    def __init__(
+        self,
+        responses: list[str | Exception],
+        *,
+        model_name: str = DEFAULT_MODEL,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
+    ) -> None:
         self.responses = responses
         self.calls = 0
         self.schemas: list[dict] = []
+        self.model_name = model_name
+        self.prompt_version = prompt_version
 
     def extract(self, *, candidate_texts, page, output_schema) -> str:
         self.schemas.append(output_schema)
