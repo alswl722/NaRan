@@ -1,7 +1,8 @@
-"""환경정보공개시스템(env-info.kr) 수집기 — 대조의 '실측' 소스.
+"""환경정보공개시스템(env-info.kr)에 공개된 환경 데이터 수집기.
 
-기업의 지속가능경영보고서 '주장'과 대조할 **법정 신고 실측치**를 가져온다.
-상세 페이지가 서버사이드 렌더링이라 세션 없이 GET 한 번으로 끝난다.
+공개 항목의 의무·자율 여부와 기업·사업장 범위가 다를 수 있으므로 다른
+출처의 절대적 정답으로 간주하지 않는다. 상세 페이지 원문을 파싱하되 비교
+조건과 provenance는 ``db.public_data``에서 명시적으로 결합한다.
 
 URL 패턴 (사이트 JS `viewSearch2()` 에서 확인):
     /user/register/viewUserSearch2.do?YEAR={year}&COMP_ID={comp_id}&OPEN_YN=Y
@@ -19,6 +20,7 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass, asdict
+from decimal import Decimal, InvalidOperation
 
 import requests
 
@@ -34,13 +36,13 @@ class EnvRecord:
     comp_id: str
     year: int
     company: str | None = None
-    revenue_mkrw: float | None = None      # 매출액 (백만원)
+    revenue_mkrw: Decimal | None = None    # 매출액 (백만원)
     employees: int | None = None
-    scope1_tco2e: float | None = None
-    scope2_tco2e: float | None = None
-    scope3_tco2e: float | None = None
-    scope12_tco2e: float | None = None      # ★ 대조 기준 — Scope 1+2만
-    reported_total_tco2e: float | None = None   # 사이트 표기 총량 (Scope 3 포함될 수 있음)
+    scope1_tco2e: Decimal | None = None
+    scope2_tco2e: Decimal | None = None
+    scope3_tco2e: Decimal | None = None
+    scope12_tco2e: Decimal | None = None
+    reported_total_tco2e: Decimal | None = None
     scope3_included: bool = False           # 표기 총량에 Scope 3가 섞였는가
     inventory_disclosed: bool = False       # 온실가스 명세서 공개 여부
     violations: int = 0                     # 환경법규 위반/사고 건수
@@ -60,13 +62,13 @@ def _clean(html: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-def _num(pattern: str, text: str) -> float | None:
+def _num(pattern: str, text: str) -> Decimal | None:
     m = re.search(pattern, text)
     if not m:
         return None
     try:
-        return float(m.group(1).replace(",", ""))
-    except (ValueError, IndexError):
+        return Decimal(m.group(1).replace(",", ""))
+    except (InvalidOperation, IndexError):
         return None
 
 
@@ -91,16 +93,23 @@ def parse(html: str, comp_id: str, year: int) -> EnvRecord:
     # ── 결손 판별 ────────────────────────────────────────────────────────
     # 원본이 미입력을 "0 ton CO2 eq / 전년도 입력 정보 없음"으로 채워서 준다.
     # 0을 실측 0으로 받아들이면 대조가 통째로 거짓이 된다 — 결손으로 되돌린다.
-    # Scope 1·2·총량이 모두 0인 제조 사업장은 현실에 없다. 미입력으로 본다.
-    # 원본은 이를 "전년도 입력 정보 없음" 또는 "전년대비 100% (감소↓)"로 표기하는데,
-    # 후자는 화면상 '100% 감축 달성'처럼 보인다 — 그대로 믿으면 대조가 거짓이 된다.
+    # 0 자체만으로 미입력을 추론하지 않는다. 출처가 함께 표시한 명시적인
+    # 미입력 문구가 있을 때만 0 표기를 결손으로 되돌린다.
     all_zero = (rec.reported_total_tco2e == 0
                 and not rec.scope1_tco2e and not rec.scope2_tco2e)
-    if all_zero:
+    explicit_missing_marker = bool(
+        re.search(
+            r"전년도\s*입력\s*정보\s*없음|"
+            r"온실가스(?:배출량|배출총량)?\s*(?:항목|정보)?\s*"
+            r"(?:미입력|미공개)",
+            t,
+        )
+    )
+    if all_zero and explicit_missing_marker:
         rec.missing_reason = "원본 미입력 (0으로 표기됨)"
         rec.scope1_tco2e = rec.scope2_tco2e = rec.scope3_tco2e = None
         rec.reported_total_tco2e = None
-    elif rec.reported_total_tco2e is None:
+    elif rec.reported_total_tco2e is None and explicit_missing_marker:
         rec.missing_reason = "온실가스 항목 미공개 (자율 항목)"
 
     # ── 대조 기준은 Scope 1+2 ────────────────────────────────────────────
@@ -109,10 +118,11 @@ def parse(html: str, comp_id: str, year: int) -> EnvRecord:
     # 범위가 바뀐 것을 배출이 늘어난 것으로 읽으면 오탐이다. 1+2로 고정한다.
     if rec.scope1_tco2e is not None and rec.scope2_tco2e is not None:
         rec.scope12_tco2e = rec.scope1_tco2e + rec.scope2_tco2e
-    elif rec.reported_total_tco2e is not None and not rec.scope3_tco2e:
-        rec.scope12_tco2e = rec.reported_total_tco2e
-
-    if rec.scope3_tco2e and rec.reported_total_tco2e:
+    if (
+        rec.scope3_tco2e is not None
+        and rec.reported_total_tco2e is not None
+        and rec.scope12_tco2e is not None
+    ):
         rec.scope3_included = rec.reported_total_tco2e > (rec.scope12_tco2e or 0) * 1.5
 
     rec.inventory_disclosed = bool(re.search(r"온실가스 명세서\s+공개", t))
@@ -137,7 +147,7 @@ def series(comp_id: str, years: range, delay: float = 0.5) -> list[EnvRecord]:
     for y in years:
         try:
             out.append(fetch(comp_id, y, s))
-        except Exception as e:  # noqa: BLE001 — 실패도 기록해 결손을 드러낸다
+        except (requests.RequestException, ValueError) as e:
             rec = EnvRecord(comp_id=comp_id, year=y)
             rec.company = f"[수집실패: {type(e).__name__}]"
             out.append(rec)
