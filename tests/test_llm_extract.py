@@ -68,14 +68,15 @@ def test_demo_cache_extracts_case_a_without_client_or_api_key() -> None:
 
 
 def test_cache_key_changes_with_every_version_dimension() -> None:
-    base = ClaimCacheKey("sha256:x", 1, "model", "prompt", "schema")
+    base = ClaimCacheKey("sha256:x", "report-x", 1, "model", "prompt", "schema")
 
     variants = [
-        ClaimCacheKey("sha256:y", 1, "model", "prompt", "schema"),
-        ClaimCacheKey("sha256:x", 2, "model", "prompt", "schema"),
-        ClaimCacheKey("sha256:x", 1, "model-2", "prompt", "schema"),
-        ClaimCacheKey("sha256:x", 1, "model", "prompt-2", "schema"),
-        ClaimCacheKey("sha256:x", 1, "model", "prompt", "schema-2"),
+        ClaimCacheKey("sha256:y", "report-x", 1, "model", "prompt", "schema"),
+        ClaimCacheKey("sha256:x", "report-y", 1, "model", "prompt", "schema"),
+        ClaimCacheKey("sha256:x", "report-x", 2, "model", "prompt", "schema"),
+        ClaimCacheKey("sha256:x", "report-x", 1, "model-2", "prompt", "schema"),
+        ClaimCacheKey("sha256:x", "report-x", 1, "model", "prompt-2", "schema"),
+        ClaimCacheKey("sha256:x", "report-x", 1, "model", "prompt", "schema-2"),
     ]
 
     assert all(variant.digest != base.digest for variant in variants)
@@ -178,6 +179,81 @@ def test_hallucinated_raw_text_is_rejected() -> None:
             cache=cache(),
             client=client,
         )
+
+
+def test_partial_candidate_text_cannot_validate_longer_generated_quote() -> None:
+    data = case("sample_case_c.json")
+    response = draft_batch(data["claims"][0])
+    client = SequenceClient([response, response])
+
+    with pytest.raises(ExtractionUnavailableError, match="정확히 일치"):
+        extract_claims(
+            document_hash="sha256:no-cache",
+            report_id=data["report"]["id"],
+            page=1,
+            candidate_texts=("배출량",),
+            mode=ExecutionMode.LIVE,
+            cache=cache(),
+            client=client,
+        )
+
+
+def test_cache_is_isolated_by_report_id() -> None:
+    data = case("sample_case_a.json")
+
+    with pytest.raises(ExtractionUnavailableError, match="검증 캐시가 없습니다"):
+        extract_claims(
+            document_hash=data["report"]["file_hash"],
+            report_id="another-report",
+            page=171,
+            candidate_texts=(),
+            mode=ExecutionMode.VERIFIED_CACHE,
+            cache=cache(),
+        )
+
+
+def test_returned_claim_mutation_does_not_change_verified_cache() -> None:
+    data = case("sample_case_a.json")
+    verified_cache = cache()
+    first = extract_claims(
+        document_hash=data["report"]["file_hash"],
+        report_id=data["report"]["id"],
+        page=171,
+        candidate_texts=(),
+        mode=ExecutionMode.VERIFIED_CACHE,
+        cache=verified_cache,
+    )
+    first.claims[0].value = 1
+
+    second = extract_claims(
+        document_hash=data["report"]["file_hash"],
+        report_id=data["report"]["id"],
+        page=171,
+        candidate_texts=(),
+        mode=ExecutionMode.VERIFIED_CACHE,
+        cache=verified_cache,
+    )
+
+    assert second.claims[0].value == Decimal(data["claims"][0]["value"])
+
+
+def test_verified_cache_cannot_be_overwritten_with_different_claims() -> None:
+    data = case("sample_case_a.json")
+    verified_cache = cache()
+    key = ClaimCacheKey(
+        data["report"]["file_hash"],
+        data["report"]["id"],
+        171,
+        DEFAULT_MODEL,
+        DEFAULT_PROMPT_VERSION,
+        DEFAULT_SCHEMA_VERSION,
+    )
+    existing = list(verified_cache.get(key) or ())
+    assert existing
+    changed = existing[0].model_copy(update={"value": Decimal("1")})
+
+    with pytest.raises(ValueError, match="덮어쓸 수 없습니다"):
+        verified_cache.put(key, [changed])
 
 
 def test_two_live_failures_use_matching_verified_cache() -> None:

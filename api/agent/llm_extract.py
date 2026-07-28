@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from naran.contracts import (
     Claim,
@@ -33,7 +34,7 @@ class ClaimDraft(ContractModel):
 
     claim_type: ClaimType
     metric: str = Field(min_length=1)
-    value: str | None
+    value: Decimal | None
     unit: str | None
     value_basis: ValueBasis | None
     period_start: str | None
@@ -50,6 +51,15 @@ class ClaimDraft(ContractModel):
     evidence: str = Field(min_length=1)
     confidence: float = Field(ge=0, le=1)
 
+    @model_validator(mode="after")
+    def reject_blank_required_text(self) -> "ClaimDraft":
+        if any(
+            not value.strip()
+            for value in (self.metric, self.raw_text, self.evidence)
+        ):
+            raise ValueError("metric·raw_text·evidence는 공백일 수 없습니다")
+        return self
+
 
 class ClaimDraftBatch(ContractModel):
     claims: list[ClaimDraft]
@@ -58,6 +68,7 @@ class ClaimDraftBatch(ContractModel):
 @dataclass(frozen=True)
 class ClaimCacheKey:
     document_hash: str
+    report_id: str
     page: int
     model_name: str
     prompt_version: str
@@ -68,6 +79,7 @@ class ClaimCacheKey:
         raw = "\x1f".join(
             (
                 self.document_hash,
+                self.report_id,
                 str(self.page),
                 self.model_name,
                 self.prompt_version,
@@ -93,15 +105,29 @@ class VerifiedClaimCache:
         self._entries: dict[ClaimCacheKey, tuple[Claim, ...]] = {}
 
     def put(self, key: ClaimCacheKey, claims: list[Claim]) -> None:
+        if key.page < 1:
+            raise ValueError("캐시 키 페이지는 1 이상이어야 합니다")
         if any(claim.page != key.page for claim in claims):
             raise ValueError("캐시 키 페이지와 Claim 페이지가 일치해야 합니다")
-        self._entries[key] = tuple(
-            claim.model_copy(update={"extraction_mode": ExecutionMode.VERIFIED_CACHE})
+        if any(claim.report_id != key.report_id for claim in claims):
+            raise ValueError("캐시 키 report_id와 Claim report_id가 일치해야 합니다")
+        prepared = tuple(
+            claim.model_copy(
+                update={"extraction_mode": ExecutionMode.VERIFIED_CACHE},
+                deep=True,
+            )
             for claim in claims
         )
+        existing = self._entries.get(key)
+        if existing is not None and existing != prepared:
+            raise ValueError("같은 키의 검증 캐시를 다른 내용으로 덮어쓸 수 없습니다")
+        self._entries[key] = prepared
 
     def get(self, key: ClaimCacheKey) -> tuple[Claim, ...] | None:
-        return self._entries.get(key)
+        claims = self._entries.get(key)
+        if claims is None:
+            return None
+        return tuple(claim.model_copy(deep=True) for claim in claims)
 
     @classmethod
     def from_fixture_directory(
@@ -125,6 +151,7 @@ class VerifiedClaimCache:
                 cache.put(
                     ClaimCacheKey(
                         document_hash=document_hash,
+                        report_id=case["report"]["id"],
                         page=page,
                         model_name=model_name,
                         prompt_version=prompt_version,
@@ -193,6 +220,7 @@ def extract_claims(
         raise ValueError("page는 1 이상이어야 합니다")
     key = ClaimCacheKey(
         document_hash=document_hash,
+        report_id=report_id,
         page=page,
         model_name=model_name,
         prompt_version=prompt_version,
@@ -233,13 +261,9 @@ def extract_claims(
             )
             for draft in batch.claims:
                 normalized_raw_text = " ".join(draft.raw_text.split())
-                if not any(
-                    normalized_raw_text in candidate
-                    or candidate in normalized_raw_text
-                    for candidate in normalized_candidates
-                ):
+                if normalized_raw_text not in normalized_candidates:
                     raise ValueError(
-                        "추출 Claim 원문이 입력 후보 문장과 연결되지 않습니다"
+                        "추출 Claim 원문이 입력 후보 문장과 정확히 일치하지 않습니다"
                     )
             claims = _to_claims(
                 batch,
