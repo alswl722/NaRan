@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from api.agent.review_difference import DifferenceFinding
 from api.agent.orchestrator import (
     AnalysisRun,
     RunAlreadyActiveError,
@@ -95,6 +96,38 @@ def test_case_c_records_difference_review_and_hitl() -> None:
     assert "수치 대조" in stages
     assert "차이 원인 재검토" in stages
     assert run.trace[-1].input_summary == "담당자 검토 대기열로 전달"
+
+
+def test_orchestrator_assesses_structured_difference_evidence() -> None:
+    _, report, claim, fact = load_case("sample_case_c.json")
+    evidence = DifferenceFinding.model_validate(
+        {
+            "cause": "기준연도 재산정",
+            "support": "explicit",
+            "explanation": "2024년 배출량을 재산정함",
+            "raw_text": "조직변동으로 2024년 배출량을 재산정하였다.",
+            "page": 7,
+            "source_ref": report.source_url,
+            "mentions_cause": True,
+            "mentions_affected_period_or_value": True,
+        }
+    )
+
+    run = analyze_performance(
+        run_id="run-confirmed-difference",
+        report=report,
+        claim=claim,
+        public_fact=fact,
+        difference_findings=[evidence],
+        run_lock=RunLock(),
+        clock=lambda: NOW,
+    )
+
+    assert run.state is RunState.COMPLETED
+    assert run.outcome is not None
+    assert run.outcome.verdict.status == "설명된 차이"
+    review = next(event for event in run.trace if event.stage == "차이 원인 재검토")
+    assert "confirmed" in review.input_summary
 
 
 def test_failure_is_visible_in_state_and_trace() -> None:

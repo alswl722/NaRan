@@ -10,7 +10,6 @@ from typing import Callable
 
 from db.compare_engine import (
     ComparisonOutcome,
-    DifferenceEvidence,
     compare_performance,
 )
 from db.entity_map import EntityMapping
@@ -21,6 +20,11 @@ from naran.contracts import (
     Report,
     TraceEvent,
     TraceStepType,
+)
+
+from api.agent.review_difference import (
+    DifferenceFinding,
+    assess_difference_findings,
 )
 
 
@@ -101,9 +105,7 @@ def analyze_performance(
     claim: Claim,
     public_fact: PublicFact,
     boundary_mapping: EntityMapping | None = None,
-    difference_evidence: DifferenceEvidence = DifferenceEvidence.NONE,
-    evidence_note: str | None = None,
-    evidence_source: str | None = None,
+    difference_findings: list[DifferenceFinding] | None = None,
     public_data_mode: ExecutionMode = ExecutionMode.VERIFIED_CACHE,
     fallback_reason: str | None = None,
     run_lock: RunLock = DEFAULT_RUN_LOCK,
@@ -147,14 +149,17 @@ def analyze_performance(
             ],
         )
 
+        difference_assessment = assess_difference_findings(
+            difference_findings or []
+        )
         outcome = compare_performance(
             claim,
             public_fact,
             boundary_mapping=boundary_mapping,
             claim_company_id=report.company_id,
-            difference_evidence=difference_evidence,
-            evidence_note=evidence_note,
-            evidence_source=evidence_source,
+            difference_evidence=difference_assessment.evidence,
+            evidence_note=difference_assessment.note,
+            evidence_source=difference_assessment.source,
         )
         comparability = outcome.comparability
         condition_summary = ", ".join(
@@ -194,11 +199,14 @@ def analyze_performance(
                 trace.add(
                     TraceStepType.OBSERVATION,
                     "차이 원인 재검토",
-                    f"근거 수준={difference_evidence}",
+                    f"근거 수준={difference_assessment.evidence}",
                     tool_name="difference.review",
                     evidence=[
                         value
-                        for value in (evidence_note, evidence_source)
+                        for value in (
+                            difference_assessment.note,
+                            difference_assessment.source,
+                        )
                         if value is not None
                     ],
                 )
