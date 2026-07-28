@@ -8,6 +8,10 @@ from enum import StrEnum
 
 from db.comparability import check_comparability, stop_status
 from db.entity_map import EntityMapping
+from db.review_questions import (
+    question_for_numeric_difference,
+    question_for_stopped_comparison,
+)
 from naran.contracts import (
     AnalysisStatus,
     Claim,
@@ -135,16 +139,10 @@ def _difference_verdict(
         if relative is not None
         else "주장값이 0이므로 상대 차이율은 계산하지 않음"
     )
-    geographic = (
-        "국내 사업장"
-        if claim.geographic_boundary == "대한민국 국내 사업장"
-        else claim.geographic_boundary
-    )
-    question = (
-        f"동일한 {claim.period_start[:4]}년 {geographic} "
-        f"{claim.scope} 배출량 간 {_format_decimal(difference)}{normalized_unit} "
-        f"차이가 발생한 "
-        f"원인과 산정 근거를 제출해 주세요."
+    question = question_for_numeric_difference(
+        claim,
+        absolute_difference=difference,
+        normalized_unit=normalized_unit,
     )
     if relative is None:
         review_reasons.append(relative_note)
@@ -206,15 +204,15 @@ def compare_performance(
                 )
                 if field in mismatch_fields
             ]
-            follow_up = "동일한 조직·지역 범위의 배출량 자료를 제출해 주세요."
+            follow_up = question_for_stopped_comparison(comparability)
         elif status is AnalysisStatus.NOT_COMPARABLE:
             explanation = "비교 조건이 달라 계산을 중단함"
             reasons = comparability.mismatch_reasons
-            follow_up = "동일한 비교 조건의 자료를 제출해 주세요."
+            follow_up = question_for_stopped_comparison(comparability)
         else:
             explanation = "비교에 필요한 정보가 부족하여 계산을 중단함"
             reasons = comparability.missing_fields
-            follow_up = "누락된 비교 정보와 산정 근거를 제출해 주세요."
+            follow_up = question_for_stopped_comparison(comparability)
         verdict = Verdict(
             status=status,
             explanation=explanation,
