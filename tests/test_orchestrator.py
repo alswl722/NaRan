@@ -130,6 +130,37 @@ def test_orchestrator_assesses_structured_difference_evidence() -> None:
     assert "confirmed" in review.input_summary
 
 
+def test_difference_evidence_from_another_report_is_rejected() -> None:
+    _, report, claim, fact = load_case("sample_case_c.json")
+    evidence = DifferenceFinding.model_validate(
+        {
+            "cause": "기준연도 재산정",
+            "support": "explicit",
+            "explanation": "2024년 배출량을 재산정함",
+            "raw_text": "조직변동으로 2024년 배출량을 재산정하였다.",
+            "page": 7,
+            "source_ref": "https://unrelated.example/report.pdf",
+            "mentions_cause": True,
+            "mentions_affected_period_or_value": True,
+        }
+    )
+
+    run = analyze_performance(
+        run_id="run-unrelated-evidence",
+        report=report,
+        claim=claim,
+        public_fact=fact,
+        difference_findings=[evidence],
+        run_lock=RunLock(),
+        clock=lambda: NOW,
+    )
+
+    assert run.state is RunState.FAILED
+    assert run.outcome is None
+    assert "Report.source_url" in run.error
+    assert run.trace[-1].stage == "분석 실패"
+
+
 def test_failure_is_visible_in_state_and_trace() -> None:
     _, report, claim, fact = load_case("sample_case_c.json")
     claim_data = claim.model_copy(update={"claim_type": "감축목표"})

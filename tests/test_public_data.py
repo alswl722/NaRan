@@ -165,8 +165,8 @@ def test_invalid_public_emission_value_is_rejected(invalid: Decimal) -> None:
 
 
 def test_invalid_source_hash_is_rejected() -> None:
-    invalid_context = context().model_copy(update={"source_hash": "sha256:bad"})
-    record = EnvRecord(comp_id="SITE-1", year=2024)
+    data = context().model_dump()
+    data["source_hash"] = "sha256:bad"
 
     with pytest.raises(ValueError, match="source_hash"):
-        normalize_envinfo(record, context=invalid_context)
+        PublicDataContext.model_validate(data)

@@ -162,6 +162,15 @@ def analyze_performance(
             ],
         )
 
+        invalid_sources = [
+            finding.source_ref
+            for finding in (difference_findings or [])
+            if finding.source_ref != report.source_url
+        ]
+        if invalid_sources:
+            raise ValueError(
+                "차이 원인 근거 출처가 분석 대상 Report.source_url과 일치하지 않습니다"
+            )
         difference_assessment = assess_difference_findings(
             difference_findings or []
         )

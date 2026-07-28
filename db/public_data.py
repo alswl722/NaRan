@@ -9,6 +9,8 @@ from datetime import datetime
 from decimal import Decimal
 from urllib.parse import urlparse
 
+from pydantic import model_validator
+
 from db.envinfo import EnvRecord
 from naran.contracts import (
     ContractModel,
@@ -37,7 +39,8 @@ class PublicDataContext(ContractModel):
     display_decimal_places: int | None
     display_rule: str | None
 
-    def validate_provenance(self) -> None:
+    @model_validator(mode="after")
+    def validate_provenance(self) -> "PublicDataContext":
         if not all(
             value.strip()
             for value in (
@@ -53,6 +56,7 @@ class PublicDataContext(ContractModel):
             raise ValueError("source_hash는 sha256:<64자리 소문자 hex> 형식이어야 합니다")
         if self.retrieved_at.tzinfo is None:
             raise ValueError("retrieved_at에는 시간대가 필요합니다")
+        return self
 
 
 @dataclass(frozen=True)
