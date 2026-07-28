@@ -1,0 +1,113 @@
+{
+  "company": {
+    "id": "company-samsung-electronics",
+    "legal_name": "삼성전자",
+    "identifiers": {},
+    "aliases": ["Samsung Electronics"]
+  },
+  "report": {
+    "id": "report-b-2024",
+    "company_id": "company-samsung-electronics",
+    "title": "삼성전자 2025 지속가능경영보고서",
+    "reporting_year": 2024,
+    "file_hash": "pending-verification",
+    "source_url": "https://www.samsung.com/global/sustainability/media/pdf/Samsung_Electronics_Sustainability_Report_2025_ENG.pdf"
+  },
+  "claims": [
+    {
+      "id": "claim-b-global-scope1-2",
+      "report_id": "report-b-2024",
+      "claim_type": "실적주장",
+      "metric": "온실가스 배출량",
+      "value": null,
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "baseline_year": null,
+      "target_year": null,
+      "scope": "Scope 1+2",
+      "scope2_method": null,
+      "organization_boundary": "연결",
+      "geographic_boundary": "글로벌 전사 제조사업장",
+      "entity_level": "기업",
+      "raw_text": "검증된 보고서 원문과 페이지로 교체 필요",
+      "page": 1,
+      "evidence": "원문 PDF 페이지 확인 대기",
+      "confidence": 1.0,
+      "extraction_mode": "verified_cache"
+    }
+  ],
+  "public_facts": [
+    {
+      "id": "fact-b-domestic-site-scope1-2",
+      "company_id": "company-samsung-electronics",
+      "site_id": "pending-explicit-mapping",
+      "entity_level": "사업장",
+      "metric": "온실가스 배출량",
+      "raw_value": null,
+      "normalized_value": null,
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "scope": "Scope 1+2",
+      "scope2_method": null,
+      "organization_boundary": "개별 사업장",
+      "geographic_boundary": "대한민국 개별 사업장",
+      "display_decimal_places": 0,
+      "display_rule": null,
+      "disclosure_duty": "자율",
+      "source_url": "pending-verification",
+      "retrieved_at": "2026-07-28T00:00:00+09:00",
+      "source_hash": "pending-verification",
+      "version": "draft-1"
+    }
+  ],
+  "comparability": {
+    "comparable": false,
+    "conditions": [
+      {
+        "field": "geographic_boundary",
+        "status": "불일치",
+        "claim_value": "글로벌 전사 제조사업장",
+        "public_value": "대한민국 개별 사업장",
+        "reason": "지역 범위가 달라 직접 비교할 수 없음"
+      },
+      {
+        "field": "entity_level",
+        "status": "불일치",
+        "claim_value": "기업",
+        "public_value": "사업장",
+        "reason": "기업 전체와 개별 사업장 데이터임"
+      }
+    ],
+    "missing_fields": [],
+    "mismatch_reasons": [
+      "글로벌 전사 수치와 대한민국 개별 사업장 수치의 범위가 다름"
+    ]
+  },
+  "expected_verdict": {
+    "status": "비교 불가",
+    "match_type": null,
+    "claim_raw_value": null,
+    "public_raw_value": null,
+    "claim_normalized_value": null,
+    "public_normalized_value": null,
+    "absolute_difference": null,
+    "relative_difference_pct": null,
+    "explanation": "조직 및 지역 범위가 달라 계산을 중단함",
+    "review_required": true,
+    "review_reasons": ["조직경계 불일치", "지역경계 불일치"],
+    "follow_up_question": "동일한 조직·지역 범위의 배출량 자료를 제출해 주세요."
+  },
+  "monitoring_case": {
+    "id": "case-b",
+    "company_id": "company-samsung-electronics",
+    "report_id": "report-b-2024",
+    "case_type": "정기 사후관리",
+    "next_review_date": "2026-07-30",
+    "importance": "높음",
+    "synthetic": true
+  }
+}

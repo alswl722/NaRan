@@ -1,0 +1,104 @@
+{
+  "company": {
+    "id": "company-samsung-biologics",
+    "legal_name": "삼성바이오로직스",
+    "identifiers": {},
+    "aliases": ["Samsung Biologics"]
+  },
+  "report": {
+    "id": "report-a-2024",
+    "company_id": "company-samsung-biologics",
+    "title": "삼성바이오로직스 2025 ESG 보고서",
+    "reporting_year": 2024,
+    "file_hash": "pending-verification",
+    "source_url": "https://samsungbiologics.com/kr/sustainability/esg-report"
+  },
+  "claims": [
+    {
+      "id": "claim-a-scope1",
+      "report_id": "report-a-2024",
+      "claim_type": "실적주장",
+      "metric": "온실가스 배출량",
+      "value": "71840.290",
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "baseline_year": null,
+      "target_year": null,
+      "scope": "Scope 1",
+      "scope2_method": null,
+      "organization_boundary": "개별 사업장",
+      "geographic_boundary": "대한민국 국내 사업장",
+      "entity_level": "사업장",
+      "raw_text": "검증된 보고서 원문과 페이지로 교체 필요",
+      "page": 1,
+      "evidence": "원문 PDF 페이지 확인 대기",
+      "confidence": 1.0,
+      "extraction_mode": "verified_cache"
+    }
+  ],
+  "public_facts": [
+    {
+      "id": "fact-a-scope1-envinfo",
+      "company_id": "company-samsung-biologics",
+      "site_id": "pending-explicit-mapping",
+      "entity_level": "사업장",
+      "metric": "온실가스 배출량",
+      "raw_value": "71840",
+      "normalized_value": "71840",
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "scope": "Scope 1",
+      "scope2_method": null,
+      "organization_boundary": "개별 사업장",
+      "geographic_boundary": "대한민국 국내 사업장",
+      "display_decimal_places": 0,
+      "display_rule": null,
+      "disclosure_duty": "자율",
+      "source_url": "pending-verification",
+      "retrieved_at": "2026-07-28T00:00:00+09:00",
+      "source_hash": "pending-verification",
+      "version": "draft-1"
+    }
+  ],
+  "comparability": {
+    "comparable": true,
+    "conditions": [
+      {
+        "field": "scope",
+        "status": "일치",
+        "claim_value": "Scope 1",
+        "public_value": "Scope 1",
+        "reason": null
+      }
+    ],
+    "missing_fields": [],
+    "mismatch_reasons": []
+  },
+  "expected_verdict": {
+    "status": "일치",
+    "match_type": "precision_compatible",
+    "claim_raw_value": "71840.290",
+    "public_raw_value": "71840",
+    "claim_normalized_value": "71840.290",
+    "public_normalized_value": "71840",
+    "absolute_difference": "0.290",
+    "relative_difference_pct": null,
+    "explanation": "표시 정밀도 범위 내 정합",
+    "review_required": false,
+    "review_reasons": [],
+    "follow_up_question": null
+  },
+  "monitoring_case": {
+    "id": "case-a",
+    "company_id": "company-samsung-biologics",
+    "report_id": "report-a-2024",
+    "case_type": "정기 사후관리",
+    "next_review_date": "2026-08-01",
+    "importance": "보통",
+    "synthetic": true
+  }
+}

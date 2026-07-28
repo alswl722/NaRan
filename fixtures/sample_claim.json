@@ -1,0 +1,23 @@
+{
+  "id": "claim-sample-performance",
+  "report_id": "report-sample-2024",
+  "claim_type": "실적주장",
+  "metric": "온실가스 배출량",
+  "value": "100000",
+  "unit": "tCO2eq",
+  "value_basis": "절대량",
+  "period_start": "2024-01-01",
+  "period_end": "2024-12-31",
+  "baseline_year": null,
+  "target_year": null,
+  "scope": "Scope 1+2",
+  "scope2_method": "배출권거래제 기준",
+  "organization_boundary": "개별 사업장",
+  "geographic_boundary": "대한민국",
+  "entity_level": "사업장",
+  "raw_text": "2024년 국내 사업장의 Scope 1+2 온실가스 배출량은 100,000tCO2eq입니다.",
+  "page": 1,
+  "evidence": "검증 fixture의 합성 문장",
+  "confidence": 1.0,
+  "extraction_mode": "verified_cache"
+}

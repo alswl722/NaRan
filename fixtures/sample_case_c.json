@@ -1,0 +1,141 @@
+{
+  "company": {
+    "id": "company-synthetic-c",
+    "legal_name": "가상기업 C",
+    "identifiers": {},
+    "aliases": []
+  },
+  "report": {
+    "id": "report-c-2024",
+    "company_id": "company-synthetic-c",
+    "title": "가상기업 C 2024 환경성과 보고서",
+    "reporting_year": 2024,
+    "file_hash": "synthetic-report-fixture",
+    "source_url": "fixture://case-c-report"
+  },
+  "claims": [
+    {
+      "id": "claim-c-scope1-2",
+      "report_id": "report-c-2024",
+      "claim_type": "실적주장",
+      "metric": "온실가스 배출량",
+      "value": "100000",
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "baseline_year": null,
+      "target_year": null,
+      "scope": "Scope 1+2",
+      "scope2_method": "배출권거래제 기준",
+      "organization_boundary": "개별 사업장",
+      "geographic_boundary": "대한민국 국내 사업장",
+      "entity_level": "사업장",
+      "raw_text": "2024년 국내 사업장 Scope 1+2 온실가스 배출량은 100,000tCO2eq입니다.",
+      "page": 1,
+      "evidence": "합성 검증 사례 원문",
+      "confidence": 1.0,
+      "extraction_mode": "verified_cache"
+    }
+  ],
+  "public_facts": [
+    {
+      "id": "fact-c-scope1-2",
+      "company_id": "company-synthetic-c",
+      "site_id": "site-c-domestic",
+      "entity_level": "사업장",
+      "metric": "온실가스 배출량",
+      "raw_value": "125000",
+      "normalized_value": "125000",
+      "unit": "tCO2eq",
+      "value_basis": "절대량",
+      "period_start": "2024-01-01",
+      "period_end": "2024-12-31",
+      "scope": "Scope 1+2",
+      "scope2_method": "배출권거래제 기준",
+      "organization_boundary": "개별 사업장",
+      "geographic_boundary": "대한민국 국내 사업장",
+      "display_decimal_places": 0,
+      "display_rule": null,
+      "disclosure_duty": "자율",
+      "source_url": "fixture://case-c-public-fact",
+      "retrieved_at": "2026-07-28T00:00:00+09:00",
+      "source_hash": "synthetic-public-fact-fixture",
+      "version": "fixture-v1"
+    }
+  ],
+  "claim_value": "100000",
+  "public_value": "125000",
+  "comparability": {
+    "comparable": true,
+    "conditions": [
+      {
+        "field": "metric",
+        "status": "일치",
+        "claim_value": "온실가스 배출량",
+        "public_value": "온실가스 배출량",
+        "reason": null
+      },
+      {
+        "field": "scope",
+        "status": "일치",
+        "claim_value": "Scope 1+2",
+        "public_value": "Scope 1+2",
+        "reason": null
+      },
+      {
+        "field": "period",
+        "status": "일치",
+        "claim_value": "2024",
+        "public_value": "2024",
+        "reason": null
+      },
+      {
+        "field": "organization_boundary",
+        "status": "일치",
+        "claim_value": "개별 사업장",
+        "public_value": "개별 사업장",
+        "reason": null
+      },
+      {
+        "field": "geographic_boundary",
+        "status": "일치",
+        "claim_value": "대한민국 국내 사업장",
+        "public_value": "대한민국 국내 사업장",
+        "reason": null
+      },
+      {
+        "field": "scope2_method",
+        "status": "일치",
+        "claim_value": "배출권거래제 기준",
+        "public_value": "배출권거래제 기준",
+        "reason": null
+      }
+    ],
+    "missing_fields": [],
+    "mismatch_reasons": []
+  },
+  "expected_verdict": {
+    "status": "설명되지 않은 차이",
+    "match_type": "different",
+    "claim_raw_value": "100000",
+    "public_raw_value": "125000",
+    "claim_normalized_value": "100000",
+    "public_normalized_value": "125000",
+    "absolute_difference": "25000",
+    "relative_difference_pct": "25",
+    "explanation": "동일한 비교 조건에서 차이가 발생했으며 공개된 설명 근거가 없음",
+    "review_required": true,
+    "review_reasons": ["동일 범위 수치 간 설명되지 않은 차이"],
+    "follow_up_question": "동일한 2024년 국내 사업장 Scope 1+2 배출량 간 25,000tCO2eq 차이가 발생한 원인과 산정 근거를 제출해 주세요."
+  },
+  "monitoring_case": {
+    "id": "case-c",
+    "company_id": "company-synthetic-c",
+    "report_id": "report-c-2024",
+    "case_type": "합성 검증 사례",
+    "next_review_date": "2026-07-29",
+    "importance": "높음",
+    "synthetic": true
+  }
+}
