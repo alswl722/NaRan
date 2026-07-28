@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import StrEnum
 from threading import Lock
 from typing import Callable
@@ -13,6 +14,7 @@ from db.compare_engine import (
     compare_performance,
 )
 from db.entity_map import EntityMapping
+from db.target_engine import TargetOutcome, evaluate_target_progress
 from naran.contracts import (
     Claim,
     ExecutionMode,
@@ -43,6 +45,15 @@ class AnalysisRun:
     run_id: str
     state: RunState
     outcome: ComparisonOutcome | None
+    trace: tuple[TraceEvent, ...]
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class TargetAnalysisRun:
+    run_id: str
+    state: RunState
+    outcome: TargetOutcome | None
     trace: tuple[TraceEvent, ...]
     error: str | None = None
 
@@ -116,6 +127,8 @@ def analyze_performance(
     trace = _Trace(clock)
     run_lock.acquire(run_id)
     try:
+        if claim.report_id != report.id:
+            raise ValueError("Claim과 Report의 report_id가 일치하지 않습니다")
         if public_data_mode is ExecutionMode.FALLBACK:
             if not fallback_reason or not fallback_reason.strip():
                 raise ValueError("fallback 모드에는 실패 원인이 필요합니다")
@@ -237,6 +250,104 @@ def analyze_performance(
             tool_name="run.fail",
         )
         return AnalysisRun(
+            run_id=run_id,
+            state=RunState.FAILED,
+            outcome=None,
+            trace=tuple(trace.events),
+            error=f"{type(exc).__name__}: {exc}",
+        )
+    finally:
+        run_lock.release(run_id)
+
+
+def analyze_reduction_target(
+    *,
+    run_id: str,
+    report: Report,
+    claim: Claim,
+    baseline_fact: PublicFact,
+    current_fact: PublicFact,
+    published_annual_path: list[dict[str, Decimal | int]] | None = None,
+    run_lock: RunLock = DEFAULT_RUN_LOCK,
+    clock: Callable[[], datetime] = _utc_now,
+) -> TargetAnalysisRun:
+    """감축목표 준비도와 진척도를 계산하고 판단 한계를 트레이스에 남긴다."""
+
+    trace = _Trace(clock)
+    run_lock.acquire(run_id)
+    try:
+        if claim.report_id != report.id:
+            raise ValueError("Claim과 Report의 report_id가 일치하지 않습니다")
+        trace.add(
+            TraceStepType.PLAN,
+            "목표 추적 계획",
+            "목표 기준정보 확인 → 기준·현재 데이터 조건 검사 → 조건부 감축률 계산",
+        )
+        trace.add(
+            TraceStepType.OBSERVATION,
+            "감축목표 추출 결과",
+            f"기준연도={claim.baseline_year}; 목표연도={claim.target_year}",
+            tool_name="claim.verified_input",
+            evidence=[
+                f"{report.source_url}#page={claim.page}",
+                report.file_hash,
+            ],
+        )
+        outcome = evaluate_target_progress(
+            claim,
+            baseline_fact,
+            current_fact,
+            claim_company_id=report.company_id,
+            published_annual_path=published_annual_path,
+        )
+        trace.add(
+            TraceStepType.OBSERVATION,
+            "목표 추적 조건 검사",
+            f"readiness={outcome.progress.readiness}",
+            tool_name="target.check",
+            evidence=[
+                *outcome.missing_fields,
+                *outcome.mismatch_reasons,
+                baseline_fact.source_url,
+                current_fact.source_url,
+            ],
+        )
+        if outcome.trackable:
+            trace.add(
+                TraceStepType.ACTION,
+                "감축률 계산",
+                f"actual_reduction_pct={outcome.progress.actual_reduction_pct}",
+                tool_name="target.progress",
+                evidence=[
+                    baseline_fact.version,
+                    current_fact.version,
+                ],
+            )
+        else:
+            trace.add(
+                TraceStepType.ACTION,
+                "목표 계산 중단",
+                outcome.progress.readiness,
+                tool_name="target.stop",
+                evidence=[
+                    *outcome.missing_fields,
+                    *outcome.mismatch_reasons,
+                ],
+            )
+        return TargetAnalysisRun(
+            run_id=run_id,
+            state=RunState.COMPLETED,
+            outcome=outcome,
+            trace=tuple(trace.events),
+        )
+    except Exception as exc:
+        trace.add(
+            TraceStepType.ACTION,
+            "목표 분석 실패",
+            f"{type(exc).__name__}: {exc}",
+            tool_name="run.fail",
+        )
+        return TargetAnalysisRun(
             run_id=run_id,
             state=RunState.FAILED,
             outcome=None,
