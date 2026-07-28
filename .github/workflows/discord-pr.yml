@@ -1,0 +1,80 @@
+name: Discord PR Notifications
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send pull request event to Discord
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPOSITORY: ${{ github.repository }}
+          ACTION: ${{ github.event.action }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          MERGED: ${{ github.event.pull_request.merged }}
+        shell: bash
+        run: |
+          if [[ -z "$WEBHOOK_URL" ]]; then
+            echo "::error::DISCORD_WEBHOOK_URL secret is not configured."
+            exit 1
+          fi
+
+          case "$ACTION" in
+            opened) event_label="🆕 PR 생성"; color=5763719 ;;
+            synchronize) event_label="🔄 PR 업데이트"; color=3447003 ;;
+            reopened) event_label="♻️ PR 재오픈"; color=10181046 ;;
+            ready_for_review) event_label="👀 리뷰 준비 완료"; color=15844367 ;;
+            closed)
+              if [[ "$MERGED" == "true" ]]; then
+                event_label="✅ PR 병합"; color=5763719
+              else
+                event_label="❌ PR 닫힘"; color=15548997
+              fi
+              ;;
+            *) event_label="PR ${ACTION}"; color=9807270 ;;
+          esac
+
+          payload="$(
+            jq -n \
+              --arg username "NaRan PR Bot" \
+              --arg title "${event_label} · #${PR_NUMBER} ${PR_TITLE}" \
+              --arg url "$PR_URL" \
+              --arg repository "$REPOSITORY" \
+              --arg author "$PR_AUTHOR" \
+              --arg branches "${HEAD_BRANCH} → ${BASE_BRANCH}" \
+              --argjson color "$color" \
+              '{
+                username: $username,
+                embeds: [{
+                  title: $title,
+                  url: $url,
+                  color: $color,
+                  fields: [
+                    {name: "저장소", value: $repository, inline: true},
+                    {name: "작성자", value: $author, inline: true},
+                    {name: "브랜치", value: $branches, inline: false}
+                  ]
+                }],
+                allowed_mentions: {parse: []}
+              }'
+          )"
+
+          curl --fail-with-body \
+            --retry 3 \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$WEBHOOK_URL?wait=true"
