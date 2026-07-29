@@ -241,7 +241,7 @@
     "mismatch_reasons": []
   },
   "expected_verdict": {
-    "status": "설명 가능성 있음",
+    "status": "일치",
     "match_type": "precision_compatible",
     "claim_raw_value": "71840.290",
     "public_raw_value": "71840",

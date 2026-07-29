@@ -252,6 +252,10 @@ LLM은 다음을 수행하지 않는다.
 | 비교 불가 | `true` |
 | 정보 부족 | `true` |
 
+단, `match_type=precision_compatible`인 일치는 대표 상태를 `일치`로
+유지하면서, 출처의 표시 규칙이 확인되지 않은 경우에 한해
+`review_required=true`로 후속 확인을 요청한다.
+
 ---
 
 ## 8. 반드시 재현해야 하는 세 사례

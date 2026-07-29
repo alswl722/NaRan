@@ -288,17 +288,8 @@ class Verdict(ContractModel):
         ):
             raise ValueError("exact 일치는 검토가 필요하지 않은 일치 상태여야 합니다")
         if self.match_type is MatchType.PRECISION_COMPATIBLE:
-            allowed = {
-                AnalysisStatus.MATCH,
-                AnalysisStatus.POSSIBLY_EXPLAINED,
-            }
-            if self.status not in allowed:
-                raise ValueError("정밀도 정합에 허용되지 않는 분석 상태입니다")
-            if (
-                self.status is AnalysisStatus.POSSIBLY_EXPLAINED
-                and not self.review_required
-            ):
-                raise ValueError("표시 규칙 미확인 상태는 사람 검토가 필요합니다")
+            if self.status is not AnalysisStatus.MATCH:
+                raise ValueError("정밀도 정합은 일치 상태여야 합니다")
         if self.match_type is MatchType.DIFFERENT:
             allowed = {
                 AnalysisStatus.EXPLAINED_DIFFERENCE,

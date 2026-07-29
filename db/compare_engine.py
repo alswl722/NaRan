@@ -280,11 +280,7 @@ def compare_performance(
             "truncate",
         }
         verdict = Verdict(
-            status=(
-                AnalysisStatus.MATCH
-                if display_rule_confirmed
-                else AnalysisStatus.POSSIBLY_EXPLAINED
-            ),
+            status=AnalysisStatus.MATCH,
             match_type=MatchType.PRECISION_COMPATIBLE,
             claim_raw_value=claim.value,
             public_raw_value=public_fact.raw_value,

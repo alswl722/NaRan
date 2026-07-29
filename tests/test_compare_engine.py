@@ -65,7 +65,7 @@ def test_case_a_scope1_is_precision_compatible() -> None:
         claim_company_id=CASE_A_COMPANY_ID,
     )
 
-    assert outcome.verdict.status is AnalysisStatus.POSSIBLY_EXPLAINED
+    assert outcome.verdict.status is AnalysisStatus.MATCH
     assert outcome.verdict.match_type is MatchType.PRECISION_COMPATIBLE
     assert outcome.verdict.review_required
     assert outcome.verdict.absolute_difference == Decimal("0.290")
@@ -83,7 +83,7 @@ def test_case_a_scope2_is_precision_compatible_at_integer_display() -> None:
         claim_company_id=CASE_A_COMPANY_ID,
     )
 
-    assert outcome.verdict.status is AnalysisStatus.POSSIBLY_EXPLAINED
+    assert outcome.verdict.status is AnalysisStatus.MATCH
     assert outcome.verdict.match_type is MatchType.PRECISION_COMPATIBLE
     assert outcome.verdict.review_required
     assert outcome.verdict.absolute_difference == Decimal("0.011")
