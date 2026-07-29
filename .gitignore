@@ -32,5 +32,11 @@ dist/
 *.swp
 tmp/
 
+# Local SQLite fallback DB (DATABASE_URL 미설정 시 생성)
+*.db
+*.db-journal
+
 # Downloaded source documents (keep URLs and hashes in fixtures)
 references/*.pdf
+
+docs/
