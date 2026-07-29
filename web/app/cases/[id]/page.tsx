@@ -90,9 +90,9 @@ export default function CaseDetailPage({
 
   if (error && !caseSummary) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10">
+      <div className="w-full px-8 py-8 lg:px-12">
         <p className="text-[14px] text-status-unexplained">{error}</p>
-        <Link href="/" className="mt-4 inline-block text-[13px] text-brand underline">
+        <Link href="/cases" className="mt-4 inline-block text-[13px] text-brand underline">
           대기열로 돌아가기
         </Link>
       </div>
@@ -101,9 +101,7 @@ export default function CaseDetailPage({
 
   if (!caseSummary) {
     return (
-      <div className="mx-auto w-full max-w-4xl px-5 py-10 text-[14px] text-faint">
-        불러오는 중…
-      </div>
+      <div className="w-full px-8 py-8 text-[14px] text-faint lg:px-12">불러오는 중…</div>
     );
   }
 
@@ -113,8 +111,8 @@ export default function CaseDetailPage({
   );
 
   return (
-    <div className="mx-auto w-full max-w-4xl flex-1 px-5 py-10">
-      <Link href="/" className="text-[13px] text-faint hover:text-ink">
+    <div className="w-full flex-1 px-8 py-8 lg:px-12">
+      <Link href="/cases" className="text-[13px] text-faint hover:text-ink">
         ← 대기열로
       </Link>
 
@@ -155,35 +153,41 @@ export default function CaseDetailPage({
         </div>
       )}
 
-      <section className="mb-8 flex flex-col gap-4">
-        {claimDetails.map((detail) => (
-          <ClaimCard key={detail.claim.id} detail={detail} />
-        ))}
-      </section>
-
-      {runsWithTrace.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-[15px] font-bold text-ink-strong">트레이스</h2>
-          <div className="flex flex-col gap-4">
-            {runsWithTrace.map(({ run, trace }) => (
-              <div key={run.id} className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-                <div className="mb-3 flex items-center justify-between text-[12.5px]">
-                  <span className="font-semibold text-ink-strong">
-                    {runLabel(run.logical_key, claimDetails)}
-                  </span>
-                  <span className="text-faint">{formatDateTime(run.started_at)}</span>
-                </div>
-                <TraceTimeline events={trace} />
-              </div>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        {/* 본문 — 주장 카드(장면 3·4) */}
+        <section className="flex flex-col gap-4">
+          {claimDetails.map((detail) => (
+            <ClaimCard key={detail.claim.id} detail={detail} />
+          ))}
         </section>
-      )}
 
-      <section className="mb-8">
-        <h2 className="mb-3 text-[15px] font-bold text-ink-strong">HITL</h2>
-        <HitlPanel caseId={caseId} history={reviewHistory} onHistoryChange={setReviewHistory} />
-      </section>
+        {/* 사이드 — 트레이스(장면 2) + HITL */}
+        <div className="flex flex-col gap-6">
+          {runsWithTrace.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[15px] font-bold text-ink-strong">트레이스</h2>
+              <div className="flex flex-col gap-4">
+                {runsWithTrace.map(({ run, trace }) => (
+                  <div key={run.id} className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+                    <div className="mb-3 flex items-center justify-between text-[12.5px]">
+                      <span className="font-semibold text-ink-strong">
+                        {runLabel(run.logical_key, claimDetails)}
+                      </span>
+                      <span className="text-faint">{formatDateTime(run.started_at)}</span>
+                    </div>
+                    <TraceTimeline events={trace} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="mb-3 text-[15px] font-bold text-ink-strong">HITL</h2>
+            <HitlPanel caseId={caseId} history={reviewHistory} onHistoryChange={setReviewHistory} />
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
