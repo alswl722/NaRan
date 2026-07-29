@@ -1,4 +1,12 @@
+import { formatDecimal } from "@/lib/format";
 import type { ComparabilityResult } from "@/lib/types";
+
+/** value 조건만 숫자 — 나머지 필드(scope, unit 등)는 문자열 그대로 둔다. */
+function displayValue(field: string, value: string | null): string {
+  if (value === null) return "—";
+  if (field !== "value") return value;
+  return formatDecimal(value);
+}
 
 const FIELD_LABEL: Record<string, string> = {
   value: "수치",
@@ -38,8 +46,8 @@ export function ComparabilityTable({ result }: { result: ComparabilityResult }) 
               <td className="px-3 py-2 font-medium text-ink-strong">
                 {FIELD_LABEL[c.field] ?? c.field}
               </td>
-              <td className="px-3 py-2 text-ink">{c.claim_value ?? "—"}</td>
-              <td className="px-3 py-2 text-ink">{c.public_value ?? "—"}</td>
+              <td className="px-3 py-2 tabular-nums text-ink">{displayValue(c.field, c.claim_value)}</td>
+              <td className="px-3 py-2 tabular-nums text-ink">{displayValue(c.field, c.public_value)}</td>
               <td className="px-3 py-2">
                 <span
                   className={`inline-block rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${

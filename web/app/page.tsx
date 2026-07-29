@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiGet, ApiError } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import type { CaseSummary } from "@/lib/types";
 
 const IMPORTANCE_LABEL: Record<string, string> = {
@@ -98,7 +99,7 @@ function CaseRow({ c }: { c: CaseSummary }) {
       <div className="flex shrink-0 items-center gap-3">
         <div className="text-right">
           <div className="text-[12px] text-faint">다음 점검일</div>
-          <div className="text-[13px] font-medium text-ink">{c.next_review_date}</div>
+          <div className="text-[13px] font-medium text-ink">{formatDate(c.next_review_date)}</div>
         </div>
         <div className="text-right" title="중요도는 AI 위험점수가 아닙니다">
           <div className="text-[12px] text-faint">중요도</div>

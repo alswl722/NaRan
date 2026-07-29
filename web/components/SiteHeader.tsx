@@ -7,8 +7,10 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/로고.png" alt="나란" width={120} height={32} className="h-8 w-auto" priority />
+        <Link href="/" className="flex items-center gap-3">
+          <Image src="/logo.png" alt="KB국민은행" width={120} height={32} className="h-8 w-auto" priority />
+          <span className="h-6 w-px bg-line" />
+          <span className="text-[18px] font-bold tracking-tight text-ink-strong">나란</span>
         </Link>
         <div className="flex items-center gap-2 border-l border-line pl-4">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-ink-strong">

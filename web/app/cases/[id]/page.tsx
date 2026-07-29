@@ -3,10 +3,20 @@
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 import type { CaseSummary, ClaimDetail, ReviewRecord, RunSummary, TraceEvent } from "@/lib/types";
 import { ClaimCard } from "@/components/ClaimCard";
 import { TraceTimeline } from "@/components/TraceTimeline";
 import { HitlPanel } from "@/components/HitlPanel";
+
+/** run.logical_key("run-case-a-claim-a-scope1-fact-...")에서 이 run이 다룬
+ * claim의 사람이 읽는 라벨(예: "Scope 1 온실가스 배출량")을 되짚는다. */
+function runLabel(logicalKey: string, claims: ClaimDetail[]): string {
+  const matched = claims.find((d) => logicalKey.includes(`-${d.claim.id}-`));
+  if (!matched) return logicalKey;
+  const { metric, scope } = matched.claim;
+  return scope ? `${scope} ${metric}` : metric;
+}
 
 type RunWithTrace = { run: RunSummary; trace: TraceEvent[] };
 
@@ -157,9 +167,11 @@ export default function CaseDetailPage({
           <div className="flex flex-col gap-4">
             {runsWithTrace.map(({ run, trace }) => (
               <div key={run.id} className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-                <div className="mb-3 flex items-center justify-between text-[12px] text-faint">
-                  <span>{run.logical_key}</span>
-                  <span>{run.started_at.slice(0, 16).replace("T", " ")}</span>
+                <div className="mb-3 flex items-center justify-between text-[12.5px]">
+                  <span className="font-semibold text-ink-strong">
+                    {runLabel(run.logical_key, claimDetails)}
+                  </span>
+                  <span className="text-faint">{formatDateTime(run.started_at)}</span>
                 </div>
                 <TraceTimeline events={trace} />
               </div>

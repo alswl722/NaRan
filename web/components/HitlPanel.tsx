@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 import type { ReviewAction, ReviewRecord } from "@/lib/types";
 
 const ACTIONS: ReviewAction[] = ["추가 자료 요청", "검토 완료", "보류"];
@@ -111,12 +112,16 @@ export function HitlPanel({
           <ol className="mt-2 flex flex-col gap-2">
             {history.map((h) => (
               <li key={h.id} className="text-[12.5px] text-ink">
-                <span className="font-semibold text-ink-strong">{h.action}</span>
-                {h.previous_action && (
-                  <span className="text-faint"> (이전: {h.previous_action})</span>
-                )}
-                <span className="text-faint"> · {h.reviewer} · {h.processed_at.slice(0, 16).replace("T", " ")}</span>
-                <div className="text-faint">{h.note}</div>
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="font-semibold text-ink-strong">{h.action}</span>
+                  {h.previous_action && (
+                    <span className="text-faint">이전 조치 · {h.previous_action}</span>
+                  )}
+                </div>
+                <div className="text-faint">
+                  {h.reviewer} · {formatDateTime(h.processed_at)}
+                </div>
+                <div className="mt-0.5 text-ink">{h.note}</div>
               </li>
             ))}
           </ol>
