@@ -12,9 +12,18 @@ export function SiteHeader() {
       <div className="flex h-16 w-full items-center justify-between px-8 lg:px-12">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="KB국민은행" width={120} height={32} className="h-8 w-auto" priority />
+            <Image
+              src="/logo.png"
+              alt="KB국민은행"
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
             <span className="h-6 w-px bg-line" />
-            <span className="text-[18px] font-bold tracking-tight text-ink-strong">나란</span>
+            <span className="font-logo text-[22px] tracking-tight text-ink-strong">
+              나란
+            </span>
           </Link>
           <nav className="flex items-center gap-1 text-[13.5px]">
             <Link
@@ -25,7 +34,7 @@ export function SiteHeader() {
                   : "text-muted hover:bg-brand-soft hover:text-ink-strong"
               }`}
             >
-              사후관리 대기열
+              여신 사후관리 대기열
             </Link>
           </nav>
         </div>
@@ -35,8 +44,10 @@ export function SiteHeader() {
             담
           </span>
           <div className="hidden leading-tight sm:block">
-            <div className="text-xs font-semibold text-ink-strong">사후관리 담당자</div>
-            <div className="text-[10px] text-faint">데모용 가상 계정</div>
+            <div className="text-xs font-semibold text-ink-strong">
+              관리 담당자
+            </div>
+            <div className="text-[10px] text-faint">데모용 계정</div>
           </div>
         </div>
       </div>

@@ -1,6 +1,14 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
 
+/* 마루부리 — 로고("나란") 전용. 감탄 프로젝트에서 가져온 동일 폰트. */
+@font-face {
+  font-family: "MaruBuri";
+  src: url("/MaruBuri-Light.otf") format("opentype");
+  font-weight: 300;
+  font-display: swap;
+}
+
 /* ==========================================================================
    나란(NaRan) 디자인 토큰
    컬러는 KB 금융그룹 공식 브랜드 가이드 값을 그대로 사용한다.
@@ -37,6 +45,7 @@
   --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system,
     "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-logo: "MaruBuri", var(--font-sans);
 
   --shadow-card: 0 1px 2px rgba(40, 36, 20, 0.04), 0 8px 24px -12px rgba(40, 36, 20, 0.10);
   --shadow-float: 0 12px 32px -8px rgba(255, 188, 0, 0.28);

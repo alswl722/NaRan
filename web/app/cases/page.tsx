@@ -35,7 +35,7 @@ export default function QueuePage() {
   return (
     <div className="w-full flex-1 px-8 py-8 lg:px-12">
       <header className="mb-6 step-enter">
-        <h1 className="text-2xl font-bold text-ink-strong">사후관리 검토 대기열</h1>
+        <h1 className="text-2xl font-bold text-ink-strong">여신 사후관리 검토 대기열</h1>
         <p className="mt-2 text-[14px] text-muted">
           지속가능경영보고서의 환경 주장과 공개 환경 데이터를 비교 가능한 범위인지 먼저 검사한
           뒤, 비교 가능한 수치만 대조해 근거와 후속 확인 질문을 보여줍니다.
