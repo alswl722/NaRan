@@ -23,9 +23,9 @@ def _get_run_or_404(session: Session, run_id: str) -> AnalysisRunRecord:
     return run
 
 
-@router.get("/{run_id}")
-def get_run(run_id: str, session: Session = Depends(get_session)) -> dict:
-    run = _get_run_or_404(session, run_id)
+def run_summary_body(session: Session, run: AnalysisRunRecord) -> dict:
+    """api/routers/cases.py의 GET /cases/{id}/runs에서도 재사용한다."""
+
     verdict = session.scalars(
         select(VerdictRecord).where(VerdictRecord.run_id == run.id)
     ).first()
@@ -46,6 +46,12 @@ def get_run(run_id: str, session: Session = Depends(get_session)) -> dict:
             else None
         ),
     }
+
+
+@router.get("/{run_id}")
+def get_run(run_id: str, session: Session = Depends(get_session)) -> dict:
+    run = _get_run_or_404(session, run_id)
+    return run_summary_body(session, run)
 
 
 @router.get("/{run_id}/trace")

@@ -1,0 +1,100 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+@import "tailwindcss";
+
+/* ==========================================================================
+   나란(NaRan) 디자인 토큰
+   컬러는 KB 금융그룹 공식 브랜드 가이드 값을 그대로 사용한다.
+   (KB Yellow Positive/Negative, KB Gray, Sub Color — 사용자 제공 가이드 이미지 기준)
+   Tailwind v4 @theme — 여기 정의한 color 토큰은 bg-/text-/border- 유틸로 생성됨.
+   ========================================================================== */
+@theme {
+  /* Main Color — 강조는 KB Yellow로만. 화면 대부분은 KB Gray 축으로 구성한다. */
+  --color-brand: #ffbc00; /* KB Yellow Positive (R255 G188 B0) */
+  --color-brand-strong: #ffcc00; /* KB Yellow Negative (R255 G204 B0) — 밝은 배경 위 대비용 */
+  --color-brand-soft: #fff6dd; /* Yellow 배경 틴트 */
+  --color-ink: #605c58; /* KB Gray (R96 G88 B76) — 본문 텍스트 */
+  --color-ink-strong: #54494a; /* KB Dark Gray (R84 G80 B69) — 헤더·강조 텍스트 */
+
+  /* 중립 — 화면 배경·구분선 */
+  --color-bg: #f7f6f4;
+  --color-surface: #ffffff;
+  --color-muted: #857f7a;
+  --color-faint: #a8a29b;
+  --color-line: #e7e3dd;
+
+  /* Sub Color */
+  --color-gold: #7a6a2f; /* KB Gold */
+  --color-silver: #9a9a9a; /* KB Silver */
+
+  /* 의미색 — 여섯 분석 상태(claude.md 7·17절)를 화면 전체에서 동일하게 표기 */
+  --color-status-match: #1a8a5f; /* 일치 */
+  --color-status-explained: #2f7fd1; /* 설명된 차이 */
+  --color-status-possible: #b8860b; /* 설명 가능성 있음 */
+  --color-status-unexplained: #c0392b; /* 설명되지 않은 차이 */
+  --color-status-not-comparable: #857f7a; /* 비교 불가 — 위험색이 아니라 중립색 */
+  --color-status-insufficient: #a8a29b; /* 정보 부족 */
+
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --shadow-card: 0 1px 2px rgba(40, 36, 20, 0.04), 0 8px 24px -12px rgba(40, 36, 20, 0.10);
+  --shadow-float: 0 12px 32px -8px rgba(255, 188, 0, 0.28);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink-strong);
+  font-family: var(--font-sans);
+  letter-spacing: -0.011em;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 장면 전환 — 슬라이드 + 페이드 */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-enter {
+  animation: step-in 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 트레이스 이벤트 순차 등장 */
+@keyframes trace-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trace-enter {
+  animation: trace-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}

@@ -18,8 +18,10 @@ from api.agent.case_lock import case_analysis_lock
 from api.agent.llm_extract import VerifiedClaimCache
 from api.agent.persist import persist_case_analysis
 from api.agent.pipeline import CaseAnalysis, analyze_verified_case
+from api.routers.runs import run_summary_body
 from db.models import (
     AnalysisRunRecord,
+    Claim,
     Company,
     MonitoringCaseRecord,
     Report,
@@ -59,6 +61,9 @@ def _case_review_required(session: Session, case_id: str) -> bool | None:
 def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:
     company = session.get(Company, case.company_id)
     report = session.get(Report, case.report_id)
+    claim_ids = session.scalars(
+        select(Claim.id).where(Claim.report_id == case.report_id)
+    ).all()
     return {
         "id": case.id,
         "company_id": case.company_id,
@@ -70,6 +75,7 @@ def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:
         "importance": case.importance,
         "synthetic": case.synthetic,
         "review_required": _case_review_required(session, case.id),
+        "claim_ids": list(claim_ids),
     }
 
 
@@ -99,6 +105,25 @@ def get_case(case_id: str, session: Session = Depends(get_session)) -> dict:
     if case is None:
         raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
     return _case_summary(session, case)
+
+
+@router.get("/{case_id}/runs")
+def list_case_runs(case_id: str, session: Session = Depends(get_session)) -> list[dict]:
+    """이 사례에 속한 모든 실행을 최신순으로 반환한다.
+
+    프론트가 각 run의 /runs/{id}/trace를 추가로 불러 장면 2(비교 가능성
+    트레이스)를 구성할 때 쓴다.
+    """
+
+    case = session.get(MonitoringCaseRecord, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
+    runs = session.scalars(
+        select(AnalysisRunRecord)
+        .where(AnalysisRunRecord.monitoring_case_id == case_id)
+        .order_by(AnalysisRunRecord.started_at.desc())
+    ).all()
+    return [run_summary_body(session, run) for run in runs]
 
 
 def _find_case_fixture(case_id: str) -> dict:
