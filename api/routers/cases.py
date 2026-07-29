@@ -7,10 +7,17 @@ POST /cases/{id}/analyze  분석 실행
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.agent.case_lock import case_analysis_lock
+from api.agent.llm_extract import VerifiedClaimCache
+from api.agent.persist import persist_case_analysis
+from api.agent.pipeline import CaseAnalysis, analyze_verified_case
 from db.models import (
     AnalysisRunRecord,
     Company,
@@ -21,6 +28,8 @@ from db.models import (
 from db.session import get_session
 
 router = APIRouter(prefix="/cases", tags=["cases"])
+
+FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures"
 
 _IMPORTANCE_ORDER = {"높음": 0, "보통": 1, "낮음": 2}
 
@@ -92,7 +101,62 @@ def get_case(case_id: str, session: Session = Depends(get_session)) -> dict:
     return _case_summary(session, case)
 
 
+def _find_case_fixture(case_id: str) -> dict:
+    for path in sorted(FIXTURES_DIR.glob("sample_case_*.json")):
+        case_data = json.loads(path.read_text(encoding="utf-8"))
+        if case_data["monitoring_case"]["id"] == case_id:
+            return case_data
+    raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
+
+
+def _map_runs_to_claim_and_fact(case_analysis: CaseAnalysis) -> dict[str, tuple[str, str]]:
+    """run_id 접두어(run-{case_id}-{claim_id}-{fact_id})로 claim/fact를 되짚는다.
+
+    ComparisonOutcome 자체는 claim_id를 담지 않으므로, pipeline이 만든
+    run_id 규칙을 그대로 재사용해 역매핑한다 (api/agent/pipeline.py 참고).
+    """
+
+    case_prefix = f"run-{case_analysis.monitoring_case.id}-"
+    claims = [
+        claim for extraction in case_analysis.extractions for claim in extraction.claims
+    ]
+    mapping: dict[str, tuple[str, str]] = {}
+    for run in case_analysis.runs:
+        if not run.run_id.startswith(case_prefix):
+            raise ValueError(f"예상하지 못한 run_id 형식입니다: {run.run_id}")
+        remainder = run.run_id[len(case_prefix) :]
+        matched: tuple[str, str] | None = None
+        for claim in claims:
+            claim_prefix = f"{claim.id}-"
+            if remainder.startswith(claim_prefix):
+                fact_id = remainder[len(claim_prefix) :]
+                if any(fact.id == fact_id for fact in case_analysis.public_facts):
+                    matched = (claim.id, fact_id)
+                    break
+        if matched is None:
+            raise ValueError(f"run_id에서 claim/fact를 역매핑할 수 없습니다: {run.run_id}")
+        mapping[run.run_id] = matched
+    return mapping
+
+
 @router.post("/{case_id}/analyze")
 def analyze_case(case_id: str, session: Session = Depends(get_session)) -> dict:
-    """api.agent.pipeline / orchestrator를 호출해 분석을 실행한다."""
-    raise HTTPException(status_code=501, detail="구현 예정")
+    """검증 fixture와 api.agent.pipeline.analyze_verified_case로 분석을 실행한다."""
+
+    case = session.get(MonitoringCaseRecord, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
+
+    case_data = _find_case_fixture(case_id)
+
+    with case_analysis_lock(case_id):
+        cache = VerifiedClaimCache.from_fixture_directory(FIXTURES_DIR)
+        case_analysis = analyze_verified_case(case_data, cache=cache)
+        claim_and_fact_ids_by_run = _map_runs_to_claim_and_fact(case_analysis)
+        persist_case_analysis(
+            session,
+            case_analysis,
+            claim_and_fact_ids_by_run=claim_and_fact_ids_by_run,
+        )
+
+    return _case_summary(session, case)

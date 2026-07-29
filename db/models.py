@@ -189,11 +189,18 @@ class MonitoringCaseRecord(Base):
 
 
 class AnalysisRunRecord(Base):
-    """오케스트레이터 한 번의 실행. run lock과 트레이스가 이 id를 기준으로 묶인다."""
+    """오케스트레이터 한 번의 실행. 트레이스가 id를 기준으로 묶인다.
+
+    orchestrator가 만드는 run_id(예: run-{case_id}-{claim_id}-{fact_id})는
+    claim·fact 조합마다 결정론적이라 재분석 시 그대로 재사용되면 충돌한다.
+    그래서 실제 PK는 매 실행마다 새로 발급하는 id이고, orchestrator의
+    run_id는 logical_key로 별도 보존한다.
+    """
 
     __tablename__ = "analysis_runs"
 
-    id: Mapped[str] = mapped_column(String, primary_key=True)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    logical_key: Mapped[str] = mapped_column(String, nullable=False)
     monitoring_case_id: Mapped[str] = mapped_column(
         ForeignKey("monitoring_cases.id"), nullable=False
     )
