@@ -1,0 +1,53 @@
+# 나란 — 앱만 (DB 컨테이너 없음, 기본은 로컬 SQLite 폴백)
+# 실행: docker compose up --build
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    env_file:
+      - path: .env
+        required: false # DATABASE_URL 등을 지정하지 않으면 SQLite로 폴백(db/session.py)
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app/api # 핫리로드용 소스 마운트
+      - ./db:/app/db
+      - ./naran:/app/naran
+      - ./fixtures:/app/fixtures
+      - naran-sqlite:/app/data # SQLite 폴백 파일을 명명 볼륨에 보존(컨테이너 재생성에도 유지)
+    working_dir: /app
+    environment:
+      - DATABASE_URL=sqlite:////app/data/naran.db
+    command: >
+      sh -c "python -m db.init_db &&
+             uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./web:/app # 핫리로드용 소스 마운트
+      - /app/node_modules # 컨테이너 node_modules 보존(호스트로 덮이지 않게)
+      - /app/.next # 빌드 산출물 격리
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  naran-sqlite:

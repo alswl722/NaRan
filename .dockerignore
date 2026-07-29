@@ -1,0 +1,37 @@
+# 빌드 컨텍스트에서 제외 (이미지 경량화 + 빌드 캐시 무효화 최소화 + 시크릿 보호)
+.git
+.gitignore
+
+# 참고용 원본 소스 — 절대 이미지에 포함하지 않는다 (감탄 원본, 미추적)
+IM-gamtan/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / Next.js
+web/node_modules/
+web/.next/
+node_modules/
+
+# 로컬 SQLite 폴백 DB
+*.db
+*.db-journal
+
+# 환경변수 — 이미지에 굽지 않음 (compose env_file로 런타임 주입)
+.env
+.env.*
+!.env.example
+!web/.env.local.example
+
+# 문서 / 계획 / OS
+docs/
+*.md
+.DS_Store
+.claude/
