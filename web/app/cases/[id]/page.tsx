@@ -36,7 +36,8 @@ export default function CaseDetailPage({
   const [analysisMode, setAnalysisMode] = useState<"demo" | "live">("demo");
   const [allowCacheFallback, setAllowCacheFallback] = useState(true);
   const [lastExecution, setLastExecution] = useState<AnalyzeExecution | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     const summary = await apiGet<CaseSummary>(`/cases/${caseId}`);
@@ -75,9 +76,10 @@ export default function CaseDetailPage({
     async function run() {
       try {
         await loadAll();
+        if (alive) setLoadError(null);
       } catch (err) {
         if (alive) {
-          setError(err instanceof ApiError ? err.message : "사례를 불러오지 못했습니다");
+          setLoadError(err instanceof ApiError ? err.message : "사례를 불러오지 못했습니다");
         }
       }
     }
@@ -97,7 +99,7 @@ export default function CaseDetailPage({
 
   async function runAnalysis() {
     setAnalyzing(true);
-    setError(null);
+    setAnalysisError(null);
     try {
       const response = await apiPost<AnalyzeResponse>(
         `/cases/${caseId}/analyze`,
@@ -110,16 +112,18 @@ export default function CaseDetailPage({
       setLastExecution(response.execution);
       await loadAll();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "분석 실행에 실패했습니다");
+      setAnalysisError(
+        err instanceof ApiError ? err.message : "분석 실행에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+      );
     } finally {
       setAnalyzing(false);
     }
   }
 
-  if (error && !caseSummary) {
+  if (loadError && !caseSummary) {
     return (
       <div className="w-full px-8 py-8 lg:px-12">
-        <p className="text-[14px] text-status-unexplained">{error}</p>
+        <p className="text-[14px] text-status-unexplained">{loadError}</p>
         <Link href="/cases" className="mt-4 inline-block text-[13px] text-brand underline">
           대기열로 돌아가기
         </Link>
@@ -138,9 +142,12 @@ export default function CaseDetailPage({
     d.comparisons.some((c) => c.verdict.status === "비교 불가"),
   );
   const followUpQuestion =
-    claimDetails
-      .flatMap((d) => d.comparisons.map((c) => c.verdict.follow_up_question))
-      .find((q) => q !== null) ?? null;
+    lastExecution?.requested_mode === "live" &&
+    lastExecution.compared_claim_count === 0
+      ? null
+      : (claimDetails
+          .flatMap((d) => d.comparisons.map((c) => c.verdict.follow_up_question))
+          .find((q) => q !== null) ?? null);
 
   return (
     <div className="w-full flex-1 px-8 py-8 lg:px-12">
@@ -253,7 +260,14 @@ export default function CaseDetailPage({
             )}
           </div>
         )}
-        {error && <p className="mt-2 text-[13px] text-status-unexplained">{error}</p>}
+        {analysisError && (
+          <p className="mt-2 text-[13px] text-status-unexplained">{analysisError}</p>
+        )}
+        {loadError && (
+          <p className="mt-2 text-[13px] text-status-unexplained">
+            최신 사례 정보를 새로고침하지 못했습니다. 현재 표시된 결과는 이전 조회 내용입니다.
+          </p>
+        )}
       </header>
 
       {/* 장면 2 — 비교 불가 사례는 계산 중단 사실을 가장 먼저 강조한다 */}

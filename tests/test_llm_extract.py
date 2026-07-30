@@ -101,7 +101,7 @@ def test_prompt_version_change_does_not_reuse_old_cache() -> None:
             candidate_texts=(),
             mode=ExecutionMode.VERIFIED_CACHE,
             cache=cache(),
-            prompt_version="claim-extract-v2",
+            prompt_version="claim-extract-v3",
         )
 
 

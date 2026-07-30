@@ -7,6 +7,7 @@ POST /cases/{id}/analyze  분석 실행
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 from typing import Literal
@@ -243,11 +244,8 @@ def _analyze_live_case(
         else VerifiedClaimCache()
     )
     pages = sorted({int(claim["page"]) for claim in case_data["claims"]})
-    extraction_results = []
-    attempts = 0
-    fallback_reasons: list[str] = []
-    for page in pages:
-        run = extract_document_page(
+    def extract_page(page: int):
+        return extract_document_page(
             run_id=f"ui-live-{report.id}-{page}",
             pdf_path=pdf_path,
             report=report,
@@ -258,6 +256,19 @@ def _analyze_live_case(
             model_name=client.model_name,
             prompt_version=client.prompt_version,
         )
+
+    # 사례 A처럼 근거 페이지가 여러 장이면 순차 실행 시
+    # (페이지 수 × 2회 재시도 × Gemini timeout)만큼 UI 제한시간을 넘길 수
+    # 있다. 페이지는 서로 독립적이므로 동시에 추출하고, 결과는 다시 페이지
+    # 순서로 정렬해 이후 결정론적 파이프라인의 재현성을 유지한다.
+    with ThreadPoolExecutor(max_workers=min(len(pages), 3)) as executor:
+        runs_by_page = dict(zip(pages, executor.map(extract_page, pages), strict=True))
+
+    extraction_results = []
+    attempts = 0
+    fallback_reasons: list[str] = []
+    for page in pages:
+        run = runs_by_page[page]
         if run.state is RunState.FAILED or run.result is None:
             raise HTTPException(
                 status_code=502,

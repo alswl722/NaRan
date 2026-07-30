@@ -11,7 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from naran.contracts import (
     Claim,
@@ -27,7 +27,7 @@ from naran.contracts import (
 
 
 DEFAULT_MODEL = "gemini-3.6-flash"
-DEFAULT_PROMPT_VERSION = "claim-extract-v1"
+DEFAULT_PROMPT_VERSION = "claim-extract-v2"
 DEFAULT_SCHEMA_VERSION = "claim-draft-v1"
 
 
@@ -52,6 +52,22 @@ class ClaimDraft(ContractModel):
     page: int = Field(ge=1)
     evidence: str = Field(min_length=1)
     confidence: float = Field(ge=0, le=1)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def normalize_single_formatted_number(cls, value: object) -> object:
+        """천 단위 쉼표가 있는 단일 수치만 Decimal 입력으로 정규화한다.
+
+        여러 연도 수치를 한 문자열로 합친 출력은 임의로 하나를 고르지 않고
+        기존 검증에서 거부한다.
+        """
+
+        if isinstance(value, str) and re.fullmatch(
+            r"[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?",
+            value.strip(),
+        ):
+            return value.strip().replace(",", "")
+        return value
 
     @model_validator(mode="after")
     def reject_blank_required_text(self) -> "ClaimDraft":
