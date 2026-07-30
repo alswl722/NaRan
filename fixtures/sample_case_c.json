@@ -74,7 +74,7 @@
         "status": "일치",
         "claim_value": "100000",
         "public_value": "125000",
-        "reason": "양쪽 수치 존재 확인; 값의 차이는 대조 엔진에서 계산"
+        "reason": null
       },
       {
         "field": "metric",

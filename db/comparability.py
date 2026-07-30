@@ -128,7 +128,7 @@ def _value_presence_condition(
         status=ConditionStatus.MATCH,
         claim_value=_text(claim.value),
         public_value=_text(public_fact.raw_value),
-        reason="양쪽 수치 존재 확인; 값의 차이는 대조 엔진에서 계산",
+        reason=None,
     )
 
 

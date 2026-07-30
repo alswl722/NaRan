@@ -168,7 +168,7 @@
         "status": "일치",
         "claim_value": "71840.290",
         "public_value": "71840",
-        "reason": "양쪽 수치 존재 확인; 값의 차이는 대조 엔진에서 계산"
+        "reason": null
       },
       {
         "field": "metric",

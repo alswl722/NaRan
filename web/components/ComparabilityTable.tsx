@@ -1,9 +1,13 @@
-import { formatDecimal } from "@/lib/format";
+import { formatDateRange, formatDecimal } from "@/lib/format";
 import type { BoundaryMapping, ComparabilityResult } from "@/lib/types";
 
 /** value 조건만 숫자 — 나머지 필드(scope, unit 등)는 문자열 그대로 둔다. */
 function displayValue(field: string, value: string | null): string {
   if (value === null) return "—";
+  if (field === "period") {
+    const [start, end] = value.split("/");
+    return formatDateRange(start, end);
+  }
   if (field !== "value") return value;
   return formatDecimal(value);
 }
@@ -78,10 +82,12 @@ export function ComparabilityTable({
         </div>
       )}
       <div className="overflow-x-auto rounded-xl bg-bg">
-        <table className="w-full min-w-[520px] text-left text-[13px]">
+        <table className="w-full min-w-[760px] text-left text-[13px]">
         <thead>
           <tr className="text-[12px] text-faint">
-            <th className="px-3 py-2 font-medium">조건</th>
+            <th className="w-[150px] min-w-[150px] px-3 py-2 font-medium whitespace-nowrap">
+              조건
+            </th>
             <th className="px-3 py-2 font-medium">주장값</th>
             <th className="px-3 py-2 font-medium">공개값</th>
             <th className="px-3 py-2 font-medium">결과</th>
@@ -90,11 +96,23 @@ export function ComparabilityTable({
         <tbody>
           {result.conditions.map((c) => (
             <tr key={c.field}>
-              <td className="px-3 py-2 font-medium text-ink-strong">
+              <td className="w-[150px] min-w-[150px] px-3 py-2 font-medium whitespace-nowrap text-ink-strong">
                 {FIELD_LABEL[c.field] ?? c.field}
               </td>
-              <td className="px-3 py-2 tabular-nums text-ink">{displayValue(c.field, c.claim_value)}</td>
-              <td className="px-3 py-2 tabular-nums text-ink">{displayValue(c.field, c.public_value)}</td>
+              <td
+                className={`px-3 py-2 tabular-nums text-ink ${
+                  c.field === "period" ? "whitespace-nowrap" : ""
+                }`}
+              >
+                {displayValue(c.field, c.claim_value)}
+              </td>
+              <td
+                className={`px-3 py-2 tabular-nums text-ink ${
+                  c.field === "period" ? "whitespace-nowrap" : ""
+                }`}
+              >
+                {displayValue(c.field, c.public_value)}
+              </td>
               <td className="px-3 py-2">
                 <span
                   className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold ${
