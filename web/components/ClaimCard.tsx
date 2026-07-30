@@ -88,20 +88,19 @@ function revealExpandedDetails(event: React.SyntheticEvent<HTMLDetailsElement>) 
   if (!details.open) return;
 
   requestAnimationFrame(() => {
-    // 먼저 페이지 자체를 움직여 흰색 결과 카드의 시작점부터 보이게 한다.
-    const claimCard = details.closest<HTMLElement>("[data-claim-card]");
-    if (claimCard) {
-      const cardTop = claimCard.getBoundingClientRect().top;
-      const headerOffset = 80;
-      if (cardTop > headerOffset) {
-        window.scrollBy({
-          top: cardTop - headerOffset,
-          behavior: "smooth",
-        });
-      }
+    // 펼쳐진 흰색 표의 시작점을 대상으로 잡아, 오른쪽 패널뿐 아니라
+    // 페이지 스크롤도 함께 이동시킨다.
+    const expandedContent = details.querySelector<HTMLElement>(
+      "[data-expanded-comparability]",
+    );
+    if (expandedContent) {
+      expandedContent.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
 
-    // 그다음 오른쪽 결과 패널 안에서 표 하단이 가려지는 만큼만 이동한다.
+    // 표가 화면보다 길면 하단이 가려지는 만큼 결과 패널을 추가 이동한다.
     let scrollParent: HTMLElement | null = details.parentElement;
     while (scrollParent) {
       const overflowY = window.getComputedStyle(scrollParent).overflowY;
@@ -154,7 +153,6 @@ export function ClaimCard({
 
   return (
     <div
-      data-claim-card
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
       onClick={onSelect}
@@ -360,7 +358,10 @@ export function ClaimCard({
                     비교 조건 상세
                     {!comp.comparability.comparable && " — 계산을 중단한 사유"}
                   </ToggleSummary>
-                  <div className="mt-2">
+                  <div
+                    data-expanded-comparability
+                    className="mt-2 scroll-mt-20"
+                  >
                     <ComparabilityTable
                       result={comp.comparability}
                       boundaryMapping={comp.boundary_mapping}
