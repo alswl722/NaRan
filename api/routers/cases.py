@@ -51,6 +51,12 @@ REPORT_PDF_BY_ID = {
     "report-a-2024": "Samsung-Biologics-2025-ESG-Report_KR.pdf",
     "report-b-2024": "Samsung_Electronics_Sustainability_Report_2025_ENG.pdf",
 }
+# 데모 live 호출 범위. A의 p.220은 검증의견서 근거로 계속 보존하지만,
+# 수치 Claim을 추출할 페이지가 아니므로 Gemini 호출 대상에서는 제외한다.
+LIVE_EXTRACTION_PAGES_BY_REPORT = {
+    "report-a-2024": (171, 172),
+    "report-b-2024": (68,),
+}
 
 _IMPORTANCE_ORDER = {"높음": 0, "보통": 1, "낮음": 2}
 
@@ -243,7 +249,13 @@ def _analyze_live_case(
         if allow_cache_fallback
         else VerifiedClaimCache()
     )
-    pages = sorted({int(claim["page"]) for claim in case_data["claims"]})
+    pages = list(
+        LIVE_EXTRACTION_PAGES_BY_REPORT.get(
+            report.id,
+            tuple(sorted({int(claim["page"]) for claim in case_data["claims"]})),
+        )
+    )
+
     def extract_page(page: int):
         return extract_document_page(
             run_id=f"ui-live-{report.id}-{page}",
