@@ -261,6 +261,6 @@
     "case_type": "정기 사후관리",
     "next_review_date": "2026-08-01",
     "importance": "보통",
-    "synthetic": true
+    "monitoring_data_synthetic": true
   }
 }

@@ -118,7 +118,12 @@ def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:
         "case_type": case.case_type,
         "next_review_date": case.next_review_date,
         "importance": case.importance,
-        "synthetic": case.synthetic,
+        "monitoring_data_synthetic": case.monitoring_data_synthetic,
+        # fixture:// 보고서는 보고서와 공개 데이터까지 합성한 C 사례다.
+        # A·B의 실제 기업 공개자료와 데모용 여신관리 정보를 구분한다.
+        "evidence_data_synthetic": bool(
+            report and report.source_url.startswith("fixture://")
+        ),
         "review_required": _case_review_required(session, case.id),
         "claim_ids": list(claim_ids),
     }

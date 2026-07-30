@@ -175,6 +175,6 @@
     "case_type": "정기 사후관리",
     "next_review_date": "2026-07-30",
     "importance": "높음",
-    "synthetic": true
+    "monitoring_data_synthetic": true
   }
 }

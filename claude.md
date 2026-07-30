@@ -314,7 +314,7 @@ status = 비교 불가
 ```text
 status = 설명되지 않은 차이
 review_required = true
-synthetic = true
+monitoring_data_synthetic = true
 ```
 
 질문 초안:
@@ -373,7 +373,7 @@ C의 25%는 위험점수나 위법 가능성이 아니라 두 합성 수치의 �
 | `TargetProgress` | 준비도, 기준값, 현재값, 실제 감축률, 연차 경로, 선택적 계획 대비 차이 |
 | `TraceEvent` | 계획·관찰·행동, 도구, 입력 요약, 근거, 시각 |
 | `HumanReview` | 담당자 조치, 메모, 검토자, 처리 시각, 변경 이력 |
-| `MonitoringCase` | 합성 관리 건 ID, 유형, 다음 점검일, 중요도, `synthetic=true` |
+| `MonitoringCase` | 관리 건 ID, 유형, 다음 점검일, 중요도, `monitoring_data_synthetic=true` |
 
 필수 규칙:
 

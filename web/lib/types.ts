@@ -31,7 +31,10 @@ export type CaseSummary = {
   case_type: string;
   next_review_date: string;
   importance: string;
-  synthetic: boolean;
+  /** 중요도·다음 점검일 등 내부 여신관리 정보가 데모용인지 */
+  monitoring_data_synthetic: boolean;
+  /** 보고서·공개 데이터 자체가 합성 fixture인지 */
+  evidence_data_synthetic: boolean;
   /** null이면 아직 한 번도 분석을 실행하지 않은 사례 */
   review_required: boolean | null;
   claim_ids: string[];

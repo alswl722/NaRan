@@ -189,9 +189,11 @@ function CaseRow({ c }: { c: CaseSummary }) {
           <span className="font-semibold text-ink-strong hover:text-brand">
             {c.company_name ?? c.company_id}
           </span>
-          {c.synthetic && (
+          {c.monitoring_data_synthetic && (
             <span className="shrink-0 rounded-full bg-muted/15 px-2 py-0.5 text-[11px] font-medium text-muted">
-              데모용 가상 여신 정보
+              {c.evidence_data_synthetic
+                ? "완전 합성 사례"
+                : "실제 공개자료 · 여신정보 데모"}
             </span>
           )}
         </Link>

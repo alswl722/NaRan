@@ -145,7 +145,7 @@ def _upsert_monitoring_case(session: Session, case: MonitoringCase) -> None:
             case_type=case.case_type,
             next_review_date=case.next_review_date,
             importance=case.importance,
-            synthetic=case.synthetic,
+            monitoring_data_synthetic=case.monitoring_data_synthetic,
         )
     )
 

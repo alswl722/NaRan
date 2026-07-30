@@ -143,9 +143,11 @@ export default function CaseDetailPage({
           <h1 className="text-2xl font-bold text-ink-strong">
             {caseSummary.company_name ?? caseSummary.company_id}
           </h1>
-          {caseSummary.synthetic && (
+          {caseSummary.monitoring_data_synthetic && (
             <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[11.5px] font-medium text-muted">
-              데모용 가상 여신 정보 — 합성 사례
+              {caseSummary.evidence_data_synthetic
+                ? "완전 합성 사례"
+                : "실제 공개자료 · 여신정보 데모"}
             </span>
           )}
         </div>

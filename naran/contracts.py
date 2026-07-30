@@ -385,4 +385,4 @@ class MonitoringCase(ContractModel):
     case_type: str
     next_review_date: str
     importance: str
-    synthetic: bool
+    monitoring_data_synthetic: bool

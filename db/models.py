@@ -185,7 +185,12 @@ class MonitoringCaseRecord(Base):
     case_type: Mapped[str] = mapped_column(String, nullable=False)
     next_review_date: Mapped[str] = mapped_column(String, nullable=False)
     importance: Mapped[str] = mapped_column(String, nullable=False)
-    synthetic: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # 기존 SQLite 스키마의 열 이름은 유지하되, 코드에서는 무엇이 합성인지
+    # 명확히 드러나는 이름을 사용한다. 보고서·공개 데이터의 합성 여부와는
+    # 별개이며, 중요도·다음 점검일 같은 내부 사후관리 정보만 뜻한다.
+    monitoring_data_synthetic: Mapped[bool] = mapped_column(
+        "synthetic", Boolean, nullable=False, default=True
+    )
 
 
 class AnalysisRunRecord(Base):
