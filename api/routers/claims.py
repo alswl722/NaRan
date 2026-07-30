@@ -5,14 +5,18 @@ GET /claims/{id}  주장 원문·페이지·출처와 대응하는 비교 결과
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from db.entity_map import DEFAULT_ENTITY_MAP, SourceSystem
 from db.models import (
     Claim as ClaimRecord,
     ComparabilityResultRecord,
     PublicFact as PublicFactRecord,
+    Report as ReportRecord,
     VerdictRecord,
 )
 from db.session import get_session
@@ -81,6 +85,50 @@ def _comparability_body(result: ComparabilityResultRecord) -> dict:
     }
 
 
+def _source_system(source_url: str) -> SourceSystem | None:
+    hostname = urlparse(source_url).hostname
+    if hostname in {"env-info.kr", "www.env-info.kr"}:
+        return SourceSystem.ENV_INFO
+    if hostname in {"gir.go.kr", "www.gir.go.kr"}:
+        return SourceSystem.GIR
+    return None
+
+
+def _boundary_mapping_body(
+    session: Session,
+    claim: ClaimRecord,
+    fact: PublicFactRecord,
+) -> dict | None:
+    """비교에 실제 사용한 기업·사업장 범위 매핑 근거를 화면에 전달한다."""
+
+    if fact.site_id is None or not claim.period_start:
+        return None
+    source_system = _source_system(fact.source_url)
+    report = session.get(ReportRecord, claim.report_id)
+    if source_system is None or report is None:
+        return None
+    try:
+        year = int(claim.period_start[:4])
+    except ValueError:
+        return None
+    mapping = DEFAULT_ENTITY_MAP.find(
+        source_system=source_system,
+        source_entity_id=fact.site_id,
+        company_id=report.company_id,
+        year=year,
+    )
+    if mapping is None:
+        return None
+    return {
+        "source_entity_name": mapping.source_entity_name,
+        "alignment_permitted": mapping.permits_boundary_alignment(year),
+        "evidence": list(mapping.evidence),
+        "note": mapping.note,
+        "valid_from_year": mapping.valid_from_year,
+        "valid_to_year": mapping.valid_to_year,
+    }
+
+
 def _verdict_body(verdict: VerdictRecord) -> dict:
     return {
         "status": verdict.status,
@@ -121,6 +169,9 @@ def get_claim(claim_id: str, session: Session = Depends(get_session)) -> dict:
         comparisons.append(
             {
                 "public_fact": _public_fact_body(fact) if fact else None,
+                "boundary_mapping": (
+                    _boundary_mapping_body(session, claim, fact) if fact else None
+                ),
                 "comparability": (
                     _comparability_body(comparability) if comparability else None
                 ),

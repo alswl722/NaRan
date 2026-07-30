@@ -150,6 +150,15 @@ export type ComparabilityResult = {
   mismatch_reasons: string[];
 };
 
+export type BoundaryMapping = {
+  source_entity_name: string;
+  alignment_permitted: boolean;
+  evidence: string[];
+  note: string;
+  valid_from_year: number;
+  valid_to_year: number | null;
+};
+
 export type Verdict = {
   status: AnalysisStatus;
   match_type: MatchType;
@@ -167,6 +176,7 @@ export type Verdict = {
 
 export type ClaimComparison = {
   public_fact: PublicFact | null;
+  boundary_mapping: BoundaryMapping | null;
   comparability: ComparabilityResult | null;
   verdict: Verdict;
 };

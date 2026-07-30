@@ -278,7 +278,10 @@ export function ClaimCard({
                     {!comp.comparability.comparable && " — 계산을 중단한 사유"}
                   </ToggleSummary>
                   <div className="mt-2">
-                    <ComparabilityTable result={comp.comparability} />
+                    <ComparabilityTable
+                      result={comp.comparability}
+                      boundaryMapping={comp.boundary_mapping}
+                    />
                   </div>
                 </details>
               )}
