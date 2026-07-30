@@ -235,17 +235,6 @@ export function HitlPanel({
             </div>
           )}
 
-          <div className="flex items-center gap-2 rounded-xl bg-bg px-3.5 py-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-soft text-[10px] font-semibold text-ink-strong">
-              {CURRENT_USER.initials}
-            </span>
-            <div>
-              <div className="text-[10.5px] text-faint">검토자</div>
-              <div className="text-[12.5px] font-semibold text-ink-strong">
-                {CURRENT_USER.name}
-              </div>
-            </div>
-          </div>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -303,7 +292,14 @@ export function HitlPanel({
                       {formatDateTime(record.processed_at)}
                     </span>
                   </div>
-                  <div className="mt-1 text-faint">{record.reviewer}</div>
+                  <div className="mt-1 flex items-center gap-1.5 text-faint">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-soft text-[9px] font-semibold text-ink-strong">
+                      {record.reviewer === CURRENT_USER.name
+                        ? CURRENT_USER.initials
+                        : record.reviewer.slice(0, 1)}
+                    </span>
+                    <span>{record.reviewer}</span>
+                  </div>
                   <div className="mt-0.5 text-ink">{record.note}</div>
                 </li>
                 );
