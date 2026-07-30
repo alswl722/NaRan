@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from api.routers.reviews import latest_item_resolutions
 from db.entity_map import DEFAULT_ENTITY_MAP, SourceSystem
 from db.models import (
+    AnalysisRunRecord,
     Claim as ClaimRecord,
     ComparabilityResultRecord,
     PublicFact as PublicFactRecord,
@@ -165,11 +166,18 @@ def get_claim(claim_id: str, session: Session = Depends(get_session)) -> dict:
         raise HTTPException(status_code=404, detail="주장을 찾을 수 없습니다")
 
     comparisons: list[dict] = []
-    verdicts = session.scalars(
-        select(VerdictRecord).where(VerdictRecord.claim_id == claim_id)
+    all_verdicts = session.scalars(
+        select(VerdictRecord)
+        .join(AnalysisRunRecord, VerdictRecord.run_id == AnalysisRunRecord.id)
+        .where(VerdictRecord.claim_id == claim_id)
+        .order_by(AnalysisRunRecord.started_at.desc())
     ).all()
     seen_fact_ids: set[str] = set()
-    for verdict in verdicts:
+    for verdict in all_verdicts:
+        # 같은 공개 데이터에 대한 재분석 결과는 가장 최신 판정만 현재 화면에
+        # 노출한다. 이전 판정·실행은 run 트레이스와 감사 이력에 그대로 남는다.
+        if verdict.public_fact_id in seen_fact_ids:
+            continue
         seen_fact_ids.add(verdict.public_fact_id)
         fact = session.get(PublicFactRecord, verdict.public_fact_id)
         comparability = session.scalars(
