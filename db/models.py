@@ -239,3 +239,19 @@ class HumanReviewRecord(Base):
     reviewer: Mapped[str] = mapped_column(String, nullable=False)
     processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     previous_action: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class ReviewItemResolutionRecord(Base):
+    """판정별 확인 사항 처리 이력. AI Verdict는 유지하고 처리 상태만 누적한다."""
+
+    __tablename__ = "review_item_resolutions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    case_id: Mapped[str] = mapped_column(ForeignKey("monitoring_cases.id"), nullable=False)
+    verdict_id: Mapped[str] = mapped_column(ForeignKey("verdicts.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(ForeignKey("claims.id"), nullable=False)
+    review_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    resolution: Mapped[str] = mapped_column(String, nullable=False)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    reviewer: Mapped[str] = mapped_column(String, nullable=False)
+    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

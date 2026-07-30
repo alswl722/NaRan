@@ -19,6 +19,7 @@ from db.models import (
     AnalysisRunRecord,
     HumanReviewRecord,
     MonitoringCaseRecord,
+    ReviewItemResolutionRecord,
     VerdictRecord,
 )
 from db.session import get_session
@@ -27,6 +28,7 @@ from naran.contracts import ReviewAction
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 _ALLOWED_ACTIONS = {action.value for action in ReviewAction}
+_ALLOWED_ITEM_RESOLUTIONS = {"확인 완료", "추가 자료 요청"}
 
 
 class CreateReviewRequest(BaseModel):
@@ -34,6 +36,50 @@ class CreateReviewRequest(BaseModel):
     action: str
     note: str
     reviewer: str = Field(min_length=1)
+
+
+class CreateReviewItemResolutionRequest(BaseModel):
+    case_id: str
+    verdict_id: str
+    claim_id: str
+    review_reason: str = Field(min_length=1)
+    resolution: str
+    note: str = Field(min_length=1)
+    reviewer: str = Field(min_length=1)
+
+
+def ensure_review_item_table(session: Session) -> None:
+    """기존 데모 SQLite에도 신규 append-only 테이블을 안전하게 추가한다."""
+
+    ReviewItemResolutionRecord.__table__.create(
+        bind=session.get_bind(), checkfirst=True
+    )
+
+
+def latest_item_resolutions(
+    session: Session, verdict_id: str
+) -> dict[str, ReviewItemResolutionRecord]:
+    ensure_review_item_table(session)
+    records = session.scalars(
+        select(ReviewItemResolutionRecord)
+        .where(ReviewItemResolutionRecord.verdict_id == verdict_id)
+        .order_by(ReviewItemResolutionRecord.processed_at)
+    ).all()
+    return {record.review_reason: record for record in records}
+
+
+def _item_resolution_body(record: ReviewItemResolutionRecord) -> dict:
+    return {
+        "id": record.id,
+        "case_id": record.case_id,
+        "verdict_id": record.verdict_id,
+        "claim_id": record.claim_id,
+        "review_reason": record.review_reason,
+        "resolution": record.resolution,
+        "note": record.note,
+        "reviewer": record.reviewer,
+        "processed_at": record.processed_at.isoformat(),
+    }
 
 
 def _latest_review(session: Session, case_id: str) -> HumanReviewRecord | None:
@@ -112,6 +158,60 @@ def create_review(
             session, body.case_id
         )
     return response
+
+
+@router.post("/items")
+def create_review_item_resolution(
+    body: CreateReviewItemResolutionRequest,
+    session: Session = Depends(get_session),
+) -> dict:
+    ensure_review_item_table(session)
+    if body.resolution not in _ALLOWED_ITEM_RESOLUTIONS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"resolution은 {sorted(_ALLOWED_ITEM_RESOLUTIONS)} 중 하나여야 합니다",
+        )
+    case = session.get(MonitoringCaseRecord, body.case_id)
+    verdict = session.get(VerdictRecord, body.verdict_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
+    if verdict is None or verdict.claim_id != body.claim_id:
+        raise HTTPException(status_code=404, detail="판정 항목을 찾을 수 없습니다")
+    if body.review_reason not in verdict.review_reasons:
+        raise HTTPException(status_code=422, detail="판정에 없는 확인 사유입니다")
+
+    run = session.get(AnalysisRunRecord, verdict.run_id)
+    if run is None or run.monitoring_case_id != body.case_id:
+        raise HTTPException(status_code=422, detail="사례와 판정이 일치하지 않습니다")
+
+    record = ReviewItemResolutionRecord(
+        case_id=body.case_id,
+        verdict_id=body.verdict_id,
+        claim_id=body.claim_id,
+        review_reason=body.review_reason,
+        resolution=body.resolution,
+        note=body.note,
+        reviewer=body.reviewer,
+        processed_at=datetime.now(timezone.utc),
+    )
+    session.add(record)
+    session.commit()
+    return _item_resolution_body(record)
+
+
+@router.get("/{case_id}/items")
+def get_review_item_history(
+    case_id: str, session: Session = Depends(get_session)
+) -> list[dict]:
+    ensure_review_item_table(session)
+    if session.get(MonitoringCaseRecord, case_id) is None:
+        raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
+    records = session.scalars(
+        select(ReviewItemResolutionRecord)
+        .where(ReviewItemResolutionRecord.case_id == case_id)
+        .order_by(ReviewItemResolutionRecord.processed_at)
+    ).all()
+    return [_item_resolution_body(record) for record in records]
 
 
 @router.get("/{case_id}/history")

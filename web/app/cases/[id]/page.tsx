@@ -9,6 +9,7 @@ import type {
   CaseSummary,
   ClaimDetail,
   ReportPdfMeta,
+  ReviewItem,
   ReviewRecord,
   RunSummary,
   TraceEvent,
@@ -170,20 +171,28 @@ export default function CaseDetailPage({
     lastExecution.compared_claim_count === 0
       ? null
       : (claimDetails
-          .flatMap((d) => d.comparisons.map((c) => c.verdict.follow_up_question))
-          .find((q) => q !== null) ?? null);
-  const reviewItems = Array.from(
-    new Set(
-      claimDetails.flatMap((detail) =>
-        detail.comparisons.flatMap((comparison) =>
-          comparison.verdict.review_required
-            ? comparison.verdict.review_reasons.map(
+          .flatMap((d) =>
+            d.comparisons.map((c) => {
+              const hasPendingReason = c.verdict.review_reasons.some(
                 (reason) =>
-                  `${detail.claim.scope ?? detail.claim.metric}: ${reviewReasonLabel(reason)}`,
-              )
-            : [],
-        ),
-      ),
+                  c.verdict.review_resolutions[reason]?.resolution !== "확인 완료",
+              );
+              return hasPendingReason ? c.verdict.follow_up_question : null;
+            }),
+          )
+          .find((q) => q !== null) ?? null);
+  const reviewItems: ReviewItem[] = claimDetails.flatMap((detail) =>
+    detail.comparisons.flatMap((comparison) =>
+      comparison.verdict.review_required
+        ? comparison.verdict.review_reasons.map((reason) => ({
+            verdict_id: comparison.verdict.id,
+            claim_id: detail.claim.id,
+            scope: detail.claim.scope ?? detail.claim.metric,
+            reason,
+            reason_label: reviewReasonLabel(reason),
+            resolution: comparison.verdict.review_resolutions[reason] ?? null,
+          }))
+        : [],
     ),
   );
 
@@ -368,6 +377,7 @@ export default function CaseDetailPage({
           onHistoryChange={setReviewHistory}
           followUpQuestion={followUpQuestion}
           reviewItems={reviewItems}
+          onReviewItemsChange={loadAll}
         />
       </section>
     </div>

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.routers.reviews import latest_item_resolutions
 from db.entity_map import DEFAULT_ENTITY_MAP, SourceSystem
 from db.models import (
     Claim as ClaimRecord,
@@ -129,8 +130,10 @@ def _boundary_mapping_body(
     }
 
 
-def _verdict_body(verdict: VerdictRecord) -> dict:
+def _verdict_body(session: Session, verdict: VerdictRecord) -> dict:
+    resolutions = latest_item_resolutions(session, verdict.id)
     return {
+        "id": verdict.id,
         "status": verdict.status,
         "match_type": verdict.match_type,
         "claim_raw_value": verdict.claim_raw_value,
@@ -143,6 +146,15 @@ def _verdict_body(verdict: VerdictRecord) -> dict:
         "review_required": verdict.review_required,
         "review_reasons": verdict.review_reasons,
         "follow_up_question": verdict.follow_up_question,
+        "review_resolutions": {
+            reason: {
+                "resolution": record.resolution,
+                "note": record.note,
+                "reviewer": record.reviewer,
+                "processed_at": record.processed_at.isoformat(),
+            }
+            for reason, record in resolutions.items()
+        },
     }
 
 
@@ -175,7 +187,7 @@ def get_claim(claim_id: str, session: Session = Depends(get_session)) -> dict:
                 "comparability": (
                     _comparability_body(comparability) if comparability else None
                 ),
-                "verdict": _verdict_body(verdict),
+                "verdict": _verdict_body(session, verdict),
             }
         )
 

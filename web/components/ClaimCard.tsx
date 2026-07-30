@@ -194,16 +194,30 @@ export function ClaimCard({
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-5">
-          {comparisons.map((comp, i) => (
-            <section key={i} className={i === 0 ? "" : "border-t border-line pt-5"}>
+          {comparisons.map((comp, i) => {
+            const pendingReasons = comp.verdict.review_reasons.filter(
+              (reason) =>
+                comp.verdict.review_resolutions[reason]?.resolution !== "확인 완료",
+            );
+            const humanConfirmed =
+              comp.verdict.review_required &&
+              comp.verdict.review_reasons.length > 0 &&
+              pendingReasons.length === 0;
+            return (
+              <section key={i} className={i === 0 ? "" : "border-t border-line pt-5"}>
               <SectionLabel>대조 결과{comparisons.length > 1 ? ` ${i + 1}` : ""}</SectionLabel>
 
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={comp.verdict.status} />
-                {comp.verdict.review_required && comp.verdict.review_reasons.length > 0 && (
+                {pendingReasons.length > 0 && (
                   <span className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-strong">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                     검토 필요
+                  </span>
+                )}
+                {humanConfirmed && (
+                  <span className="ml-auto text-[12px] font-semibold text-muted">
+                    담당자 확인 완료
                   </span>
                 )}
               </div>
@@ -247,10 +261,19 @@ export function ClaimCard({
 
               {comp.verdict.review_required && comp.verdict.review_reasons.length > 0 && (
                 <div className="mt-3 rounded-sm border border-brand/40 bg-brand-soft px-3 py-2.5">
-                  <div className="text-[11px] font-semibold text-muted">담당자 확인 사항</div>
+                  <div className="text-[11px] font-semibold text-muted">
+                    {humanConfirmed ? "담당자 확인 완료" : "담당자 확인 사항"}
+                  </div>
                   <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[12.5px] text-ink">
                     {comp.verdict.review_reasons.map((reason) => (
-                      <li key={reason}>{reviewReasonLabel(reason)}</li>
+                      <li key={reason}>
+                        {reviewReasonLabel(reason)}
+                        {comp.verdict.review_resolutions[reason]?.resolution === "확인 완료" && (
+                          <span className="ml-1 text-muted">
+                            · {comp.verdict.review_resolutions[reason].reviewer} 확인
+                          </span>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -289,8 +312,9 @@ export function ClaimCard({
                   </div>
                 </details>
               )}
-            </section>
-          ))}
+              </section>
+            );
+          })}
 
           {runs.length > 0 && (
             <section className="border-t border-line pt-5">

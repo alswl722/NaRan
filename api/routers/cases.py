@@ -31,6 +31,7 @@ from api.agent.pipeline import (
     analyze_verified_case,
 )
 from api.agent.orchestrator import RunState
+from api.routers.reviews import latest_item_resolutions
 from api.routers.runs import run_summary_body
 from db.models import (
     AnalysisRunRecord,
@@ -67,25 +68,41 @@ class AnalyzeCaseRequest(BaseModel):
 
 
 def _case_review_required(session: Session, case_id: str) -> bool | None:
-    """이 사례에 속한 실행들 중 하나라도 review_required가 있으면 true.
+    """최신 판정에 미처리 확인 사항이 하나라도 있으면 true.
 
     아직 분석을 한 번도 실행하지 않은 사례는 None(미분석)을 반환한다 —
     분석 전 상태를 review_required=false로 오인시키지 않기 위함이다.
+    AI의 원본 판정은 유지하고 별도 담당자 처리 이력만 반영한다.
     """
 
-    run_ids = session.scalars(
-        select(AnalysisRunRecord.id).where(
-            AnalysisRunRecord.monitoring_case_id == case_id
+    rows = session.execute(
+        select(VerdictRecord, AnalysisRunRecord.started_at)
+        .join(AnalysisRunRecord, VerdictRecord.run_id == AnalysisRunRecord.id)
+        .where(AnalysisRunRecord.monitoring_case_id == case_id)
+        .order_by(AnalysisRunRecord.started_at.desc())
+    ).all()
+    if not rows:
+        return None
+
+    latest_by_comparison: dict[tuple[str, str], VerdictRecord] = {}
+    for verdict, _started_at in rows:
+        latest_by_comparison.setdefault(
+            (verdict.claim_id, verdict.public_fact_id), verdict
         )
-    ).all()
-    if not run_ids:
-        return None
-    verdicts = session.scalars(
-        select(VerdictRecord.review_required).where(VerdictRecord.run_id.in_(run_ids))
-    ).all()
-    if not verdicts:
-        return None
-    return any(verdicts)
+
+    for verdict in latest_by_comparison.values():
+        if not verdict.review_required:
+            continue
+        if not verdict.review_reasons:
+            return True
+        resolutions = latest_item_resolutions(session, verdict.id)
+        if any(
+            resolutions.get(reason) is None
+            or resolutions[reason].resolution != "확인 완료"
+            for reason in verdict.review_reasons
+        ):
+            return True
+    return False
 
 
 def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:

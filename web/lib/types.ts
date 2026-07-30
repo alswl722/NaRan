@@ -160,6 +160,7 @@ export type BoundaryMapping = {
 };
 
 export type Verdict = {
+  id: string;
   status: AnalysisStatus;
   match_type: MatchType;
   claim_raw_value: string | null;
@@ -172,6 +173,24 @@ export type Verdict = {
   review_required: boolean;
   review_reasons: string[];
   follow_up_question: string | null;
+  review_resolutions: Record<
+    string,
+    {
+      resolution: "확인 완료" | "추가 자료 요청";
+      note: string;
+      reviewer: string;
+      processed_at: string;
+    }
+  >;
+};
+
+export type ReviewItem = {
+  verdict_id: string;
+  claim_id: string;
+  scope: string;
+  reason: string;
+  reason_label: string;
+  resolution: Verdict["review_resolutions"][string] | null;
 };
 
 export type ClaimComparison = {
