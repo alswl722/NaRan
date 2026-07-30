@@ -1,7 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ComparabilityTable } from "@/components/ComparabilityTable";
 import { HighlightedText } from "@/components/HighlightedText";
@@ -17,20 +15,42 @@ import {
 } from "@/lib/format";
 import type { ClaimDetail, RunSummary, TraceEvent } from "@/lib/types";
 
-// pdf.js는 브라우저 전용 API(DOMMatrix 등)에 의존해 서버에서 임포트하면
-// 깨진다 — 펼친 시점에만, 클라이언트에서만 로드한다.
-const PdfViewer = dynamic(
-  () => import("@/components/PdfViewer").then((m) => m.PdfViewer),
-  { ssr: false },
-);
-
 type RunWithTrace = { run: RunSummary; trace: TraceEvent[] };
+
+type ScopeField = { label: string; value: string };
+
+/** Scope·조직경계·지역경계·기간처럼 "동일 범위인지" 판단에 쓰이는 값 —
+ * 알약형 배지로 나열하면 어떤 값이 어떤 항목인지 라벨이 안 보였다.
+ * 라벨-값 칼럼으로 늘어놓아 조건별로 정확히 대조할 수 있게 한다. */
+function ScopeFields({ fields }: { fields: ScopeField[] }) {
+  if (fields.length === 0) return null;
+  return (
+    <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 border border-line px-3 py-2 sm:grid-cols-3">
+      {fields.map((f) => (
+        <div key={f.label} className="min-w-0">
+          <div className="text-[10.5px] font-semibold text-faint">{f.label}</div>
+          <div className="truncate text-[12.5px] font-medium text-ink-strong">{f.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** 카드 안의 섹션 구분 라벨 — 근거 / 대조 결과 / 트레이스처럼 정보 종류가
+ * 다른 블록의 경계를 여백만으로는 구분하기 어려워 소제목을 둔다. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-2 text-[11px] font-bold tracking-wide text-muted uppercase">
+      {children}
+    </div>
+  );
+}
 
 /** details 토글 공통 헤더 — 배경 있는 칩 + 회전 화살표로 펼침 가능한 요소임을
  * 뚜렷하게 드러낸다. 기존엔 11.5px 옅은 회색 텍스트뿐이라 눈에 잘 안 띄었다. */
 function ToggleSummary({ children }: { children: React.ReactNode }) {
   return (
-    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full bg-bg px-3 py-1.5 text-[12.5px] font-semibold text-muted select-none hover:bg-brand-soft hover:text-ink-strong">
+    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-sm bg-bg px-3 py-1.5 text-[12.5px] font-semibold text-muted select-none hover:bg-brand-soft hover:text-ink-strong">
       <svg
         className="h-3 w-3 shrink-0 transition-transform group-open:rotate-90"
         viewBox="0 0 24 24"
@@ -48,46 +68,43 @@ function ToggleSummary({ children }: { children: React.ReactNode }) {
 }
 
 /** 장면 3(주장 카드+근거) · 장면 4(대조 결과)를 한 카드에서 함께 보여준다.
- * 담당자가 스캔하듯 훑을 수 있도록, 판단에 필요한 정보(상태·나란히 비교·검토 필요
- * 여부)만 항상 펼쳐두고, 원문·근거·트레이스 같은 부가 정보는 접어서 숨긴다.
+ * 원문 PDF는 좌측 PdfPanel이 상시 노출하므로, 이 카드는 판정 결과 대조에
+ * 집중한다. 카드를 클릭하면 좌측 PDF가 이 claim의 페이지·좌표로 동기화된다.
  * 트레이스는 이 claim을 다룬 실행(run)만 골라 카드 안에 그대로 붙인다 —
  * 별도 섹션으로 떼어두면 어떤 판정의 트레이스인지 매번 라벨로 되짚어야 했다. */
 export function ClaimCard({
   detail,
   runs = [],
-  pdfAvailable = false,
+  isActive = false,
+  onSelect,
 }: {
   detail: ClaimDetail;
   runs?: RunWithTrace[];
-  /** GET /reports/{report_id}/pdf/meta 결과 — 상위에서 사례당 한 번만 조회해 내려준다. */
-  pdfAvailable?: boolean;
+  /** 좌측 PdfPanel이 현재 이 claim을 보여주고 있는지 — 카드 강조에 쓴다. */
+  isActive?: boolean;
+  onSelect?: () => void;
 }) {
   const { claim, comparisons, analyzed } = detail;
-  const [pdfOpen, setPdfOpen] = useState(false);
-
-  function togglePdf() {
-    setPdfOpen((open) => !open);
-  }
-
-  const metaLine = [
-    claim.organization_boundary,
-    claim.geographic_boundary,
-    claim.period_start && claim.period_end ? formatDateRange(claim.period_start, claim.period_end) : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 
   return (
-    <div className="rounded-2xl bg-surface p-5 shadow-card">
+    <div
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (onSelect && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`rounded-sm border bg-surface p-5 shadow-card transition ${
+        onSelect ? "cursor-pointer text-left" : ""
+      } ${isActive ? "border-brand" : "border-transparent"}`}
+    >
       {/* 원문·페이지·메타데이터 — 장면 3 */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 text-[13.5px]">
-            <span className="font-semibold text-ink-strong">{claim.metric}</span>
-            {claim.scope && <span className="text-muted">· {claim.scope}</span>}
-            {claim.scope2_method && <span className="text-muted">· {claim.scope2_method}</span>}
-          </div>
-          {metaLine && <div className="mt-0.5 text-[11.5px] text-faint">{metaLine}</div>}
+          <div className="text-[13.5px] font-semibold text-ink-strong">{claim.metric}</div>
         </div>
         <div className="shrink-0 text-right">
           <div className="text-[19px] font-bold tabular-nums text-ink-strong">
@@ -97,65 +114,64 @@ export function ClaimCard({
         </div>
       </div>
 
-      <details className="mt-3 group">
-        <ToggleSummary>원문 나란히 보기</ToggleSummary>
-        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-xl bg-bg px-4 py-3">
-            <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-semibold text-faint">
-              <span>보고서 원문 · p.{claim.page}</span>
-              {pdfAvailable ? (
-                <button
-                  type="button"
-                  onClick={togglePdf}
-                  className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-ink-strong hover:opacity-80"
-                >
-                  {pdfOpen ? "원문 PDF 접기" : "원문 PDF 보기"}
-                </button>
-              ) : (
-                <span className="shrink-0 text-faint">원문 PDF 없음 (합성 사례)</span>
-              )}
-            </div>
-            <blockquote className="text-[13px] leading-relaxed text-ink">
-              “<HighlightedText text={claim.raw_text} values={[claim.value]} />”
-            </blockquote>
-          </div>
-          <div className="rounded-xl bg-bg px-4 py-3">
-            <div className="mb-1.5 text-[11px] font-semibold text-faint">공개 데이터 근거</div>
-            {comparisons.length > 0 && comparisons[0].public_fact ? (
-              <p className="text-[13px] leading-relaxed text-ink">
-                <HighlightedText
-                  text={publicFactSentence(comparisons[0].public_fact)}
-                  values={[comparisons[0].public_fact.raw_value]}
-                />
-              </p>
-            ) : (
-              <p className="text-[13px] text-faint">아직 대조된 공개 데이터가 없습니다.</p>
-            )}
-          </div>
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-faint">
-          <span>{claim.evidence}</span>
-          <span>{extractionModeLabel(claim.extraction_mode)}</span>
-        </div>
+      <ScopeFields
+        fields={[
+          claim.scope ? { label: "Scope", value: claim.scope } : null,
+          claim.scope2_method ? { label: "Scope 2 산정 방식", value: claim.scope2_method } : null,
+          claim.organization_boundary
+            ? { label: "조직경계", value: claim.organization_boundary }
+            : null,
+          claim.geographic_boundary
+            ? { label: "지역경계", value: claim.geographic_boundary }
+            : null,
+          claim.period_start && claim.period_end
+            ? { label: "기간", value: formatDateRange(claim.period_start, claim.period_end) }
+            : null,
+        ].filter((f): f is ScopeField => f !== null)}
+      />
 
-        {pdfOpen && (
-          <div className="mt-3">
-            <PdfViewer
-              reportId={claim.report_id}
-              initialPage={claim.page}
-              claimId={claim.id}
-            />
+      {/* 근거 — 원문 인용 + 공개 데이터 근거를 하나의 섹션으로 묶는다.
+          전체 PDF는 좌측 PdfPanel이 상시 보여주므로, 여기서는 "이 claim이
+          어느 문장에서 왔는지"만 텍스트로 짚어준다. */}
+      <div className="mt-4">
+        <SectionLabel>근거</SectionLabel>
+      </div>
+      <div className="rounded-sm border border-line">
+        <div className="px-4 py-3">
+          <div className="text-[11px] font-semibold text-faint">보고서 원문</div>
+          <blockquote className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink">
+            “<HighlightedText text={claim.raw_text} values={[claim.value]} />”
+          </blockquote>
+        </div>
+        {comparisons.length > 0 && comparisons[0].public_fact && (
+          <div className="border-t border-line px-4 py-3">
+            <div className="text-[11px] font-semibold text-faint">공개 데이터 근거</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink">
+              <HighlightedText
+                text={publicFactSentence(comparisons[0].public_fact)}
+                values={[comparisons[0].public_fact.raw_value]}
+              />
+            </p>
           </div>
         )}
-      </details>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-faint">
+        <span>{claim.evidence}</span>
+        <span>{extractionModeLabel(claim.extraction_mode)}</span>
+      </div>
 
       {/* 대조 결과 — 장면 4 */}
       {!analyzed ? (
-        <p className="mt-4 text-[13px] text-faint">아직 분석을 실행하지 않았습니다.</p>
+        <div className="mt-4">
+          <SectionLabel>대조 결과</SectionLabel>
+          <p className="text-[13px] text-faint">아직 분석을 실행하지 않았습니다.</p>
+        </div>
       ) : (
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="mt-5 flex flex-col gap-5">
           {comparisons.map((comp, i) => (
-            <div key={i} className={i === 0 ? "" : "border-t border-line pt-4"}>
+            <section key={i} className={i === 0 ? "" : "border-t border-line pt-5"}>
+              <SectionLabel>대조 결과{comparisons.length > 1 ? ` ${i + 1}` : ""}</SectionLabel>
+
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={comp.verdict.status} />
                 {matchTypeLabel(comp.verdict.match_type) && (
@@ -171,16 +187,15 @@ export function ClaimCard({
                 )}
               </div>
 
-              {/* 나란히 — 보고서 값과 공개 데이터 값을 같은 자리에 놓고 본다 */}
-              <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2.5">
-                <div className="rounded-xl bg-bg px-3 py-2.5 text-center">
+              {/* 보고서 값과 공개 데이터 값을 같은 자리에 놓고 본다 */}
+              <div className="mt-3 grid grid-cols-2 border border-line">
+                <div className="border-r border-line px-3 py-2.5 text-center">
                   <div className="text-[11px] text-faint">보고서</div>
                   <div className="mt-0.5 text-[16px] font-bold tabular-nums text-ink-strong">
                     {formatValueWithUnit(comp.verdict.claim_raw_value, claim.unit)}
                   </div>
                 </div>
-                <span className="text-[12px] font-semibold text-faint">나란히</span>
-                <div className="rounded-xl bg-bg px-3 py-2.5 text-center">
+                <div className="px-3 py-2.5 text-center">
                   <div className="text-[11px] text-faint">공개 데이터</div>
                   <div className="mt-0.5 text-[16px] font-bold tabular-nums text-ink-strong">
                     {comp.public_fact
@@ -229,7 +244,7 @@ export function ClaimCard({
               )}
 
               {comp.comparability && (
-                <details className="mt-3 group">
+                <details className="mt-3 group" onClick={(e) => e.stopPropagation()}>
                   <ToggleSummary>
                     비교 조건 상세
                     {!comp.comparability.comparable && " — 계산을 중단한 사유"}
@@ -239,19 +254,22 @@ export function ClaimCard({
                   </div>
                 </details>
               )}
-            </div>
+            </section>
           ))}
 
           {runs.length > 0 && (
-            <details className="border-t border-line pt-4 group">
-              <ToggleSummary>
-                트레이스 보기 · {formatDateTime(runs[0].run.started_at)}
-                {runs.length > 1 && ` (이전 실행 ${runs.length - 1}건 더 있음)`}
-              </ToggleSummary>
-              <div className="mt-2">
-                <TraceTimeline events={runs[0].trace} />
-              </div>
-            </details>
+            <section className="border-t border-line pt-5">
+              <SectionLabel>트레이스</SectionLabel>
+              <details className="group" onClick={(e) => e.stopPropagation()}>
+                <ToggleSummary>
+                  트레이스 보기 · {formatDateTime(runs[0].run.started_at)}
+                  {runs.length > 1 && ` (이전 실행 ${runs.length - 1}건 더 있음)`}
+                </ToggleSummary>
+                <div className="mt-2">
+                  <TraceTimeline events={runs[0].trace} />
+                </div>
+              </details>
+            </section>
           )}
         </div>
       )}

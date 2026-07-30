@@ -132,7 +132,7 @@ export function PdfViewer({
         </div>
       </div>
 
-      <div className="max-h-[720px] overflow-auto p-4">
+      <div className="max-h-full overflow-auto p-4">
         {loadError ? (
           <p className="p-6 text-center text-[13px] text-status-unexplained">
             PDF를 불러오지 못했습니다: {loadError}

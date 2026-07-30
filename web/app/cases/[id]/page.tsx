@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types";
 import { ClaimCard } from "@/components/ClaimCard";
 import { HitlPanel } from "@/components/HitlPanel";
+import { PdfPanel } from "@/components/PdfPanel";
 
 type RunWithTrace = { run: RunSummary; trace: TraceEvent[] };
 
@@ -30,6 +31,7 @@ export default function CaseDetailPage({
   const [runsWithTrace, setRunsWithTrace] = useState<RunWithTrace[]>([]);
   const [reviewHistory, setReviewHistory] = useState<ReviewRecord[]>([]);
   const [pdfAvailable, setPdfAvailable] = useState(false);
+  const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<"demo" | "live">("demo");
   const [allowCacheFallback, setAllowCacheFallback] = useState(true);
@@ -84,6 +86,14 @@ export default function CaseDetailPage({
       alive = false;
     };
   }, [loadAll]);
+
+  // 좌측 PdfPanel에 보여줄 claim — 사용자가 고른 선택(activeClaimId)이
+  // 현재 목록에 없으면(최초 로드, 재분석 후 claim 구성 변경 등) 첫 번째로
+  // 대체한다. effect로 state를 동기화하지 않고 렌더 시점에 파생시킨다.
+  const effectiveClaimId =
+    activeClaimId && claimDetails.some((d) => d.claim.id === activeClaimId)
+      ? activeClaimId
+      : (claimDetails[0]?.claim.id ?? null);
 
   async function runAnalysis() {
     setAnalyzing(true);
@@ -260,20 +270,31 @@ export default function CaseDetailPage({
         </div>
       )}
 
-      {/* 주장 카드(장면 3·4) + 그 주장을 다룬 실행의 트레이스(장면 2) —
-          나란히 대조 뷰가 넓은 폭을 쓰므로 전체 폭 1단으로 배치한다 */}
-      <section className="flex flex-col gap-4">
-        {claimDetails.map((detail) => (
-          <ClaimCard
-            key={detail.claim.id}
-            detail={detail}
-            runs={runsWithTrace.filter(({ run }) =>
-              run.logical_key.includes(`-${detail.claim.id}-`),
-            )}
-            pdfAvailable={pdfAvailable}
-          />
-        ))}
-      </section>
+      {/* 좌우 고정 분할 — "나란히" 컨셉의 핵심 뷰. 좌측 PdfPanel은 원문을
+          상시 보여주고(lg 이상에서 sticky), 우측 카드를 고르면 좌측이 그
+          claim의 페이지·좌표로 동기화된다. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <PdfPanel
+          activeDetail={claimDetails.find((d) => d.claim.id === effectiveClaimId)}
+          pdfAvailable={pdfAvailable}
+          claimDetails={claimDetails}
+          activeClaimId={effectiveClaimId}
+          onSelectClaim={setActiveClaimId}
+        />
+        <section className="flex flex-col gap-4 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
+          {claimDetails.map((detail) => (
+            <ClaimCard
+              key={detail.claim.id}
+              detail={detail}
+              runs={runsWithTrace.filter(({ run }) =>
+                run.logical_key.includes(`-${detail.claim.id}-`),
+              )}
+              isActive={detail.claim.id === effectiveClaimId}
+              onSelect={() => setActiveClaimId(detail.claim.id)}
+            />
+          ))}
+        </section>
+      </div>
 
       {/* HITL — claim 카드들 아래, 전체 폭으로 배치해 사이드바 좁은 폭 제약을 없앤다 */}
       <section className="mt-6">
