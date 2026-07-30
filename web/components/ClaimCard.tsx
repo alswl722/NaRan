@@ -85,6 +85,10 @@ export function ClaimCard({
   onSelect?: () => void;
 }) {
   const { claim, comparisons, analyzed } = detail;
+  const evidenceLocations = claim.evidence
+    .split(/\s+및\s+/)
+    .map((location) => location.trim())
+    .filter(Boolean);
 
   return (
     <div
@@ -154,10 +158,19 @@ export function ClaimCard({
             </p>
           </div>
         )}
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-faint">
-        <span>{claim.evidence}</span>
-        <span>{extractionModeLabel(claim.extraction_mode)}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-bg/60 px-4 py-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold text-faint">근거 위치</div>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[12.5px] leading-relaxed text-muted">
+              {evidenceLocations.map((location) => (
+                <li key={location}>{location}</li>
+              ))}
+            </ul>
+          </div>
+          <span className="shrink-0 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">
+            {extractionModeLabel(claim.extraction_mode)}
+          </span>
+        </div>
       </div>
 
       {/* 대조 결과 — 장면 4 */}

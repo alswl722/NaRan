@@ -13,9 +13,9 @@ export function matchTypeLabel(matchType: MatchType): string | null {
 }
 
 export const EXTRACTION_MODE_LABEL: Record<string, string> = {
-  live: "실시간 추출",
-  verified_cache: "검증된 캐시",
-  fallback: "실시간 실패 후 캐시",
+  live: "Gemini 실시간 추출",
+  verified_cache: "원문 검증 완료",
+  fallback: "Gemini 실패 · 검증값 사용",
 };
 
 export function extractionModeLabel(mode: string): string {
