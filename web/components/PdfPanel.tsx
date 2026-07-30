@@ -31,12 +31,6 @@ export function PdfPanel({
   const activeIndex = claimDetails.findIndex((d) => d.claim.id === activeClaimId);
   const activeComparison = activeDetail?.comparisons[0] ?? null;
 
-  function goToOffset(offset: number) {
-    if (activeIndex < 0) return;
-    const next = claimDetails[activeIndex + offset];
-    if (next) onSelectClaim(next.claim.id);
-  }
-
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl bg-surface shadow-card lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
@@ -58,28 +52,29 @@ export function PdfPanel({
           )}
         </div>
         {claimDetails.length > 1 && (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => goToOffset(-1)}
-              disabled={activeIndex <= 0}
-              aria-label="이전 주장"
-              className="grid h-6 w-6 place-items-center rounded-full bg-bg text-[12px] font-bold text-muted disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ‹
-            </button>
-            <span className="text-[11.5px] tabular-nums text-faint">
-              {activeIndex + 1} / {claimDetails.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => goToOffset(1)}
-              disabled={activeIndex < 0 || activeIndex >= claimDetails.length - 1}
-              aria-label="다음 주장"
-              className="grid h-6 w-6 place-items-center rounded-full bg-bg text-[12px] font-bold text-muted disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ›
-            </button>
+          <div
+            className="flex shrink-0 items-center gap-1 rounded-full bg-bg p-1"
+            aria-label="배출량 범위 선택"
+          >
+            {claimDetails.map((detail, index) => {
+              const isActive = index === activeIndex;
+              const label = detail.claim.scope || detail.claim.metric;
+              return (
+                <button
+                  key={detail.claim.id}
+                  type="button"
+                  onClick={() => onSelectClaim(detail.claim.id)}
+                  aria-pressed={isActive}
+                  className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    isActive
+                      ? "bg-surface text-ink-strong shadow-sm"
+                      : "text-faint hover:text-ink-strong"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
