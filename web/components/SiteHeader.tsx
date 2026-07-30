@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CURRENT_USER } from "@/lib/currentUser";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -51,12 +52,10 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2 border-l border-line pl-4">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-ink-strong">
-            담
+            {CURRENT_USER.initials}
           </span>
           <div className="hidden leading-tight sm:block">
-            <div className="text-xs font-semibold text-ink-strong">
-              관리 담당자
-            </div>
+            <div className="text-xs font-semibold text-ink-strong">{CURRENT_USER.name}</div>
           </div>
         </div>
       </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
+import { CURRENT_USER } from "@/lib/currentUser";
 import { formatDateTime } from "@/lib/format";
 import type { ReviewAction, ReviewRecord } from "@/lib/types";
 
@@ -11,8 +12,6 @@ const ACTION_INFO: Record<ReviewAction, string> = {
   보류: "추가 판단 없이 보류 상태로 둡니다",
 };
 const ACTIONS = Object.keys(ACTION_INFO) as ReviewAction[];
-
-const REVIEWER_STORAGE_KEY = "naran.reviewer";
 
 export function HitlPanel({
   caseId,
@@ -29,23 +28,14 @@ export function HitlPanel({
 }) {
   const [action, setAction] = useState<ReviewAction>("추가 자료 요청");
   const [note, setNote] = useState("");
-  const [reviewer, setReviewer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // 같은 담당자가 반복해서 검토하는 화면이라, 이름은 세션 간에도 남겨둔다.
-  useEffect(() => {
-    function restoreReviewer() {
-      setReviewer(window.localStorage.getItem(REVIEWER_STORAGE_KEY) ?? "");
-    }
-    restoreReviewer();
-  }, []);
 
   const latest = history.length > 0 ? history[history.length - 1] : null;
 
   async function submit() {
-    if (!reviewer.trim() || !note.trim()) {
-      setError("검토자와 메모를 입력해 주세요.");
+    if (!note.trim()) {
+      setError("메모를 입력해 주세요.");
       return;
     }
     setSubmitting(true);
@@ -55,9 +45,8 @@ export function HitlPanel({
         case_id: caseId,
         action,
         note,
-        reviewer,
+        reviewer: CURRENT_USER.name,
       });
-      window.localStorage.setItem(REVIEWER_STORAGE_KEY, reviewer);
       const refreshed = await apiGet<ReviewRecord[]>(`/reviews/${caseId}/history`);
       onHistoryChange(refreshed);
       setNote("");
@@ -132,12 +121,17 @@ export function HitlPanel({
             </div>
           )}
 
-          <input
-            value={reviewer}
-            onChange={(e) => setReviewer(e.target.value)}
-            placeholder="검토자"
-            className="rounded-xl bg-bg px-3.5 py-2 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
-          />
+          <div className="flex items-center gap-2 rounded-xl bg-bg px-3.5 py-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-soft text-[10px] font-semibold text-ink-strong">
+              {CURRENT_USER.initials}
+            </span>
+            <div>
+              <div className="text-[10.5px] text-faint">검토자</div>
+              <div className="text-[12.5px] font-semibold text-ink-strong">
+                {CURRENT_USER.name}
+              </div>
+            </div>
+          </div>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
