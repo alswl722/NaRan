@@ -45,6 +45,27 @@ def test_api_key_is_required(monkeypatch) -> None:
         GeminiStructuredClaimClient()
 
 
+def test_model_and_timeout_can_be_loaded_from_environment(monkeypatch) -> None:
+    monkeypatch.setenv("GEMINI_API_KEY", "env-secret")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-test-model")
+    monkeypatch.setenv("GEMINI_TIMEOUT_SECONDS", "17.5")
+
+    client = GeminiStructuredClaimClient(
+        session=FakeSession(FakeResponse({"candidates": []}))
+    )
+
+    assert client.model_name == "gemini-test-model"
+    assert client.timeout == 17.5
+
+
+def test_invalid_environment_timeout_is_rejected(monkeypatch) -> None:
+    monkeypatch.setenv("GEMINI_API_KEY", "env-secret")
+    monkeypatch.setenv("GEMINI_TIMEOUT_SECONDS", "not-a-number")
+
+    with pytest.raises(GeminiConfigurationError, match="숫자"):
+        GeminiStructuredClaimClient()
+
+
 def test_structured_output_request_uses_schema_and_safe_prompt() -> None:
     output = json.dumps({"claims": []})
     session = FakeSession(

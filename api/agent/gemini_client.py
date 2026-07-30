@@ -7,6 +7,7 @@ import re
 from typing import Any
 
 import requests
+from dotenv import load_dotenv
 
 from api.agent.llm_extract import DEFAULT_MODEL, DEFAULT_PROMPT_VERSION
 
@@ -68,24 +69,36 @@ class GeminiStructuredClaimClient:
         self,
         *,
         api_key: str | None = None,
-        model_name: str = DEFAULT_MODEL,
+        model_name: str | None = None,
         prompt_version: str = DEFAULT_PROMPT_VERSION,
-        timeout: float = 30,
+        timeout: float | None = None,
         session: requests.Session | None = None,
     ) -> None:
+        load_dotenv()
         resolved_key = api_key or os.getenv("GEMINI_API_KEY")
+        resolved_model = model_name or os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
+        try:
+            resolved_timeout = (
+                timeout
+                if timeout is not None
+                else float(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))
+            )
+        except ValueError as exc:
+            raise GeminiConfigurationError(
+                "GEMINI_TIMEOUT_SECONDS는 숫자여야 합니다"
+            ) from exc
         if not resolved_key or not resolved_key.strip():
             raise GeminiConfigurationError("GEMINI_API_KEY가 필요합니다")
-        if not re.fullmatch(r"[A-Za-z0-9._-]+", model_name):
+        if not re.fullmatch(r"[A-Za-z0-9._-]+", resolved_model):
             raise GeminiConfigurationError("Gemini 모델명이 올바르지 않습니다")
         if not prompt_version.strip():
             raise GeminiConfigurationError("프롬프트 버전이 필요합니다")
-        if timeout <= 0:
+        if resolved_timeout <= 0:
             raise GeminiConfigurationError("timeout은 0보다 커야 합니다")
-        self._api_key = resolved_key
-        self._model_name = model_name
+        self._api_key = resolved_key.strip()
+        self._model_name = resolved_model
         self._prompt_version = prompt_version
-        self._timeout = timeout
+        self._timeout = resolved_timeout
         self._session = session or requests.Session()
 
     @property
@@ -95,6 +108,10 @@ class GeminiStructuredClaimClient:
     @property
     def prompt_version(self) -> str:
         return self._prompt_version
+
+    @property
+    def timeout(self) -> float:
+        return self._timeout
 
     def _prompt(self, candidate_texts: tuple[str, ...], page: int) -> str:
         candidates = "\n".join(

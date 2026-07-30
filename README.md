@@ -44,6 +44,41 @@ API 키·네트워크 없이도 `pytest`와 `POST /cases/{id}/analyze`(A·B·C)�
 전부 재현된다 — `db/session.py`는 `DATABASE_URL` 미설정 시 로컬 SQLite로
 자동 폴백하고, LLM 추출은 검증된 fixture 캐시(`verified_cache`)를 쓴다.
 
+## Gemini 실연동
+
+프로젝트 루트의 `.env`에 키를 넣는다. `.env`는 Git에서 제외된다.
+
+```bash
+cp .env.example .env
+```
+
+```dotenv
+GEMINI_API_KEY=발급받은_API_키
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_TIMEOUT_SECONDS=30
+```
+
+레퍼런스 PDF의 지정 페이지를 실제 Gemini structured output으로 추출한다.
+
+```bash
+# 삼성바이오로직스 보고서 p.171
+python -m api.agent.live_extract --case a --page 171
+
+# 삼성전자 보고서 p.68
+python -m api.agent.live_extract --case b --page 68
+```
+
+live 호출이 두 번 실패하면 해당 페이지의 검증 fixture가 있는 경우
+`fallback` 결과를 반환한다. fallback 없이 API 오류를 확인하려면:
+
+```bash
+python -m api.agent.live_extract --case a --page 171 --no-cache-fallback
+```
+
+출력에는 `execution_mode`, 모델명, 시도 횟수, 구조화된 Claim과 실행
+트레이스가 포함된다. Gemini는 주장 추출·구조화만 수행하고 비교 가능성
+판정과 차이 계산은 기존 결정론적 코드가 수행한다.
+
 ## 저장소 구조
 
 ```
