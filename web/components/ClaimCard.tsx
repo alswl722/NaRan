@@ -30,11 +30,21 @@ type ScopeField = { label: string; value: string };
 function ScopeFields({ fields }: { fields: ScopeField[] }) {
   if (fields.length === 0) return null;
   return (
-    <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 border border-line px-3 py-2 sm:grid-cols-3">
+    <div
+      data-testid="scope-fields"
+      className="mt-2 flex overflow-x-auto border border-line bg-bg/40"
+    >
       {fields.map((f) => (
-        <div key={f.label} className="min-w-0">
+        <div
+          key={f.label}
+          className={`shrink-0 border-r border-line px-3 py-2 last:border-r-0 ${
+            f.label === "기간" ? "min-w-[165px] flex-[1.6]" : "min-w-[80px] flex-1"
+          }`}
+        >
           <div className="text-[10.5px] font-semibold text-faint">{f.label}</div>
-          <div className="truncate text-[12.5px] font-medium text-ink-strong">{f.value}</div>
+          <div className="mt-0.5 whitespace-nowrap text-[11.5px] font-medium text-ink-strong">
+            {f.value}
+          </div>
         </div>
       ))}
     </div>
