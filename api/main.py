@@ -2,7 +2,7 @@
 
 라우터: /cases(사후관리 대기열·분석 실행), /runs(실행 상태·트레이스),
 /claims(주장·근거·비교 결과), /reviews(HITL 조치·감사 이력),
-/public-data(공개 데이터 수동 갱신).
+/public-data(공개 데이터 수동 갱신), /reports(원본 PDF 서빙).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from api.routers import cases, claims, public_data, reviews, runs
+from api.routers import cases, claims, public_data, reports, reviews, runs
 from db.session import get_engine
 
 app = FastAPI(title="나란 API", version="0.1.0")
@@ -36,6 +36,7 @@ app.include_router(runs.router)
 app.include_router(claims.router)
 app.include_router(reviews.router)
 app.include_router(public_data.router)
+app.include_router(reports.router)
 
 
 @app.get("/health")

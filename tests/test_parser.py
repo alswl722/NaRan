@@ -6,6 +6,8 @@ import pytest
 from db.parser import (
     PageContent,
     ParsedDocument,
+    _value_display_variants,
+    find_value_bbox,
     parse_pdf,
     prefilter_claim_candidates,
 )
@@ -137,3 +139,71 @@ def test_invalid_page_selection_is_rejected(pages: set[int]) -> None:
             REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
             pages=pages,
         )
+
+
+def test_value_display_variants_include_db_padded_and_pdf_comma_forms() -> None:
+    """DB Numeric 컬럼이 돌려주는 trailing-zero 패딩값("71840.2900000000")에서
+    PDF 원문 표기("71,840.290")를 후보로 재현할 수 있어야 한다."""
+    variants = _value_display_variants("71840.2900000000")
+    assert "71,840.290" in variants
+    assert "71840.290" in variants
+
+
+def test_value_display_variants_handle_zero_decimal_integer() -> None:
+    variants = _value_display_variants("226519.0000000000")
+    assert "226,519" in variants
+    assert "226519" in variants
+
+
+def test_value_display_variants_empty_for_blank_value() -> None:
+    assert _value_display_variants("") == []
+    assert _value_display_variants("-") == []
+
+
+def test_find_value_bbox_locates_case_a_scope1_value() -> None:
+    bbox = find_value_bbox(
+        REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        page=171,
+        value="71840.2900000000",
+    )
+    assert bbox is not None
+    assert bbox.x1 > bbox.x0
+    assert bbox.bottom > bbox.top
+    assert bbox.page_width > 0
+    assert bbox.page_height > 0
+
+
+def test_find_value_bbox_locates_case_a_total_value() -> None:
+    bbox = find_value_bbox(
+        REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        page=220,
+        value="226519.0000000000",
+    )
+    assert bbox is not None
+
+
+def test_find_value_bbox_locates_case_b_value() -> None:
+    bbox = find_value_bbox(
+        REFERENCES / "Samsung_Electronics_Sustainability_Report_2025_ENG.pdf",
+        page=68,
+        value="14889.0000000000",
+    )
+    assert bbox is not None
+
+
+def test_find_value_bbox_returns_none_for_absent_value() -> None:
+    bbox = find_value_bbox(
+        REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        page=171,
+        value="999999999",
+    )
+    assert bbox is None
+
+
+def test_find_value_bbox_returns_none_for_out_of_range_page() -> None:
+    bbox = find_value_bbox(
+        REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        page=99999,
+        value="71840.290",
+    )
+    assert bbox is None

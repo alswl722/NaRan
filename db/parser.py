@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import pdfplumber
@@ -14,6 +15,18 @@ import pdfplumber
 class ExtractedTable:
     bbox: tuple[float, float, float, float]
     rows: tuple[tuple[str | None, ...], ...]
+
+
+@dataclass(frozen=True)
+class TextBbox:
+    """PDF 좌표계(포인트, 좌상단 원점) 기준 단어 하나의 위치."""
+
+    x0: float
+    top: float
+    x1: float
+    bottom: float
+    page_width: float
+    page_height: float
 
 
 @dataclass(frozen=True)
@@ -204,3 +217,84 @@ def prefilter_claim_candidates(
         excluded_count=excluded_count,
         pages_without_text=tuple(pages_without_text),
     )
+
+
+_MAX_DECIMAL_PLACES_TRIED = 4
+
+
+def _value_display_variants(value: str) -> list[str]:
+    """"71840.2900000000" 같은 DB 조회 문자열에서 PDF 표기 후보를 만든다.
+
+    DB의 Numeric 컬럼은 원본 fixture의 표시 정밀도("71840.290", 소수
+    3자리)를 보존하지 않고 trailing zero를 붙여 돌려준다(예:
+    "71840.2900000000") — 원본 표시 자릿수 정보는 이 시점에 이미
+    사라졌다. 그래서 유효숫자만 남긴 뒤(Decimal.normalize), 실제 PDF가
+    어떤 소수 자릿수로 표기했는지 몰라 0~4자리를 전부 시도한다. PDF
+    원문은 천 단위 콤마를 포함해 하나의 토큰으로 나오므로 콤마 유무
+    두 가지 표기 모두 후보에 넣는다.
+    """
+
+    if not value or value == "-":
+        return []
+    try:
+        normalized = Decimal(value).normalize()
+    except InvalidOperation:
+        return [value]
+
+    variants: set[str] = set()
+    # 정수화된 Decimal(예: 226519)은 normalize()가 지수 표기(2.26519E+5)로
+    # 바뀔 수 있어 quantize(0)으로 되돌린다.
+    base = normalized.quantize(Decimal(1)) if normalized == normalized.to_integral_value() else normalized
+    exponent = -base.as_tuple().exponent if base.as_tuple().exponent < 0 else 0
+
+    for places in range(exponent, _MAX_DECIMAL_PLACES_TRIED + 1):
+        candidate = base if places == exponent else base.quantize(Decimal(1).scaleb(-places))
+        plain = format(candidate, "f")
+        whole, _, fraction = plain.partition(".")
+        negative = whole.startswith("-")
+        digits = whole.lstrip("-")
+        if not digits.isdigit():
+            continue
+        with_commas = f"{'-' if negative else ''}{int(digits):,}"
+        with_commas_full = f"{with_commas}.{fraction}" if fraction else with_commas
+        variants.add(plain)
+        variants.add(with_commas_full)
+    return sorted(variants, key=len, reverse=True)
+
+
+def find_value_bbox(
+    path: str | Path,
+    *,
+    page: int,
+    value: str,
+) -> TextBbox | None:
+    """PDF의 특정 페이지에서 value와 일치하는 단어 토큰의 좌표를 찾는다.
+
+    claim.raw_text 전체를 찾지 않는 이유: fixture의 raw_text는 PDF 원문
+    그대로가 아니라 사람이 표를 보고 요약한 문장이라(예: 실제 PDF는 연도별
+    수치가 한 줄에 나열된 표, raw_text는 "Scope 1 배출량 — 국내 사업장 —
+    2024 — 71,840.290tCO2eq" 같은 정규화 문장) 문장 단위 매칭은 원리적으로
+    실패한다. 반면 숫자값은 PDF에 그대로 존재하므로 값 단위 매칭이 더
+    신뢰할 수 있다.
+    """
+
+    variants = _value_display_variants(value)
+    if not variants:
+        return None
+    with pdfplumber.open(path) as pdf:
+        if page < 1 or page > len(pdf.pages):
+            return None
+        pdf_page = pdf.pages[page - 1]
+        words = pdf_page.extract_words()
+        for candidate in variants:
+            for word in words:
+                if word["text"] == candidate:
+                    return TextBbox(
+                        x0=word["x0"],
+                        top=word["top"],
+                        x1=word["x1"],
+                        bottom=word["bottom"],
+                        page_width=float(pdf_page.width),
+                        page_height=float(pdf_page.height),
+                    )
+    return None

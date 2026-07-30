@@ -17,6 +17,11 @@ export type ReviewAction = "추가 자료 요청" | "검토 완료" | "보류";
 
 export type TraceStepType = "계획" | "관찰" | "행동";
 
+export type ReportPdfMeta = {
+  available: boolean;
+  filename?: string;
+};
+
 export type CaseSummary = {
   id: string;
   company_id: string;

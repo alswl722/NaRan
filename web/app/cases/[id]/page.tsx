@@ -8,6 +8,7 @@ import type {
   AnalyzeResponse,
   CaseSummary,
   ClaimDetail,
+  ReportPdfMeta,
   ReviewRecord,
   RunSummary,
   TraceEvent,
@@ -28,6 +29,7 @@ export default function CaseDetailPage({
   const [claimDetails, setClaimDetails] = useState<ClaimDetail[]>([]);
   const [runsWithTrace, setRunsWithTrace] = useState<RunWithTrace[]>([]);
   const [reviewHistory, setReviewHistory] = useState<ReviewRecord[]>([]);
+  const [pdfAvailable, setPdfAvailable] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<"demo" | "live">("demo");
   const [allowCacheFallback, setAllowCacheFallback] = useState(true);
@@ -42,6 +44,14 @@ export default function CaseDetailPage({
       summary.claim_ids.map((cid) => apiGet<ClaimDetail>(`/claims/${cid}`)),
     );
     setClaimDetails(claims);
+
+    // 원문 PDF 열람 가능 여부는 사례당 한 번만 조회해 각 ClaimCard에 내려준다
+    // — 카드마다 반복 조회하지 않기 위함. 실패해도 페이지 전체가 깨지지
+    // 않도록 폴백한다(분석 결과 자체의 실패가 아니라 부가 기능 가용성 체크).
+    const pdfMeta = await apiGet<ReportPdfMeta>(
+      `/reports/${summary.report_id}/pdf/meta`,
+    ).catch(() => ({ available: false }) as ReportPdfMeta);
+    setPdfAvailable(pdfMeta.available);
 
     const runs = await apiGet<RunSummary[]>(`/cases/${caseId}/runs`);
     const withTrace = await Promise.all(
@@ -258,6 +268,7 @@ export default function CaseDetailPage({
             runs={runsWithTrace.filter(({ run }) =>
               run.logical_key.includes(`-${detail.claim.id}-`),
             )}
+            pdfAvailable={pdfAvailable}
           />
         ))}
       </section>

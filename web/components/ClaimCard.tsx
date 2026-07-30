@@ -1,3 +1,7 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ComparabilityTable } from "@/components/ComparabilityTable";
 import { HighlightedText } from "@/components/HighlightedText";
@@ -12,6 +16,13 @@ import {
   publicFactSentence,
 } from "@/lib/format";
 import type { ClaimDetail, RunSummary, TraceEvent } from "@/lib/types";
+
+// pdf.js는 브라우저 전용 API(DOMMatrix 등)에 의존해 서버에서 임포트하면
+// 깨진다 — 펼친 시점에만, 클라이언트에서만 로드한다.
+const PdfViewer = dynamic(
+  () => import("@/components/PdfViewer").then((m) => m.PdfViewer),
+  { ssr: false },
+);
 
 type RunWithTrace = { run: RunSummary; trace: TraceEvent[] };
 
@@ -44,11 +55,19 @@ function ToggleSummary({ children }: { children: React.ReactNode }) {
 export function ClaimCard({
   detail,
   runs = [],
+  pdfAvailable = false,
 }: {
   detail: ClaimDetail;
   runs?: RunWithTrace[];
+  /** GET /reports/{report_id}/pdf/meta 결과 — 상위에서 사례당 한 번만 조회해 내려준다. */
+  pdfAvailable?: boolean;
 }) {
   const { claim, comparisons, analyzed } = detail;
+  const [pdfOpen, setPdfOpen] = useState(false);
+
+  function togglePdf() {
+    setPdfOpen((open) => !open);
+  }
 
   const metaLine = [
     claim.organization_boundary,
@@ -82,8 +101,19 @@ export function ClaimCard({
         <ToggleSummary>원문 나란히 보기</ToggleSummary>
         <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-xl bg-bg px-4 py-3">
-            <div className="mb-1.5 text-[11px] font-semibold text-faint">
-              보고서 원문 · p.{claim.page}
+            <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-semibold text-faint">
+              <span>보고서 원문 · p.{claim.page}</span>
+              {pdfAvailable ? (
+                <button
+                  type="button"
+                  onClick={togglePdf}
+                  className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-ink-strong hover:opacity-80"
+                >
+                  {pdfOpen ? "원문 PDF 접기" : "원문 PDF 보기"}
+                </button>
+              ) : (
+                <span className="shrink-0 text-faint">원문 PDF 없음 (합성 사례)</span>
+              )}
             </div>
             <blockquote className="text-[13px] leading-relaxed text-ink">
               “<HighlightedText text={claim.raw_text} values={[claim.value]} />”
@@ -107,6 +137,16 @@ export function ClaimCard({
           <span>{claim.evidence}</span>
           <span>{extractionModeLabel(claim.extraction_mode)}</span>
         </div>
+
+        {pdfOpen && (
+          <div className="mt-3">
+            <PdfViewer
+              reportId={claim.report_id}
+              initialPage={claim.page}
+              claimId={claim.id}
+            />
+          </div>
+        )}
       </details>
 
       {/* 대조 결과 — 장면 4 */}
