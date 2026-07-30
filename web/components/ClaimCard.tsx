@@ -88,6 +88,20 @@ function revealExpandedDetails(event: React.SyntheticEvent<HTMLDetailsElement>) 
   if (!details.open) return;
 
   requestAnimationFrame(() => {
+    // 먼저 페이지 자체를 움직여 흰색 결과 카드의 시작점부터 보이게 한다.
+    const claimCard = details.closest<HTMLElement>("[data-claim-card]");
+    if (claimCard) {
+      const cardTop = claimCard.getBoundingClientRect().top;
+      const headerOffset = 80;
+      if (cardTop > headerOffset) {
+        window.scrollBy({
+          top: cardTop - headerOffset,
+          behavior: "smooth",
+        });
+      }
+    }
+
+    // 그다음 오른쪽 결과 패널 안에서 표 하단이 가려지는 만큼만 이동한다.
     let scrollParent: HTMLElement | null = details.parentElement;
     while (scrollParent) {
       const overflowY = window.getComputedStyle(scrollParent).overflowY;
@@ -140,6 +154,7 @@ export function ClaimCard({
 
   return (
     <div
+      data-claim-card
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
       onClick={onSelect}
