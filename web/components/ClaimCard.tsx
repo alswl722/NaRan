@@ -81,6 +81,40 @@ function ToggleSummary({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** details를 펼쳤을 때 하단 내용이 결과 패널 밖으로 가려지는 경우에만
+ * 가장 가까운 세로 스크롤 영역을 필요한 만큼 이동한다. */
+function revealExpandedDetails(event: React.SyntheticEvent<HTMLDetailsElement>) {
+  const details = event.currentTarget;
+  if (!details.open) return;
+
+  requestAnimationFrame(() => {
+    let scrollParent: HTMLElement | null = details.parentElement;
+    while (scrollParent) {
+      const overflowY = window.getComputedStyle(scrollParent).overflowY;
+      if (
+        (overflowY === "auto" || overflowY === "scroll") &&
+        scrollParent.scrollHeight > scrollParent.clientHeight
+      ) {
+        break;
+      }
+      scrollParent = scrollParent.parentElement;
+    }
+
+    const detailsBottom = details.getBoundingClientRect().bottom;
+    const visibleBottom = scrollParent
+      ? scrollParent.getBoundingClientRect().bottom
+      : window.innerHeight;
+    const hiddenHeight = detailsBottom - visibleBottom + 16;
+    if (hiddenHeight <= 0) return;
+
+    if (scrollParent) {
+      scrollParent.scrollBy({ top: hiddenHeight, behavior: "smooth" });
+    } else {
+      window.scrollBy({ top: hiddenHeight, behavior: "smooth" });
+    }
+  });
+}
+
 /** 장면 3(주장 카드+근거) · 장면 4(대조 결과)를 한 카드에서 함께 보여준다.
  * 원문 PDF는 좌측 PdfPanel이 상시 노출하므로, 이 카드는 판정 결과 대조에
  * 집중한다. 카드를 클릭하면 좌측 PDF가 이 claim의 페이지·좌표로 동기화된다.
@@ -302,7 +336,11 @@ export function ClaimCard({
               )}
 
               {comp.comparability && (
-                <details className="mt-3 group" onClick={(e) => e.stopPropagation()}>
+                <details
+                  className="mt-3 group"
+                  onClick={(e) => e.stopPropagation()}
+                  onToggle={revealExpandedDetails}
+                >
                   <ToggleSummary>
                     비교 조건 상세
                     {!comp.comparability.comparable && " — 계산을 중단한 사유"}
