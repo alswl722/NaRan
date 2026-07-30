@@ -203,6 +203,7 @@ export function ClaimCard({
               comp.verdict.review_required &&
               comp.verdict.review_reasons.length > 0 &&
               pendingReasons.length === 0;
+            const showExplanation = comp.verdict.match_type !== "precision_compatible";
             return (
               <section key={i} className={i === 0 ? "" : "border-t border-line pt-5"}>
               <SectionLabel>대조 결과{comparisons.length > 1 ? ` ${i + 1}` : ""}</SectionLabel>
@@ -240,9 +241,11 @@ export function ClaimCard({
                 </div>
               </div>
 
-              <p className="mt-3 text-[13px] leading-relaxed text-ink">
-                {explanationLabel(comp.verdict.explanation)}
-              </p>
+              {showExplanation && (
+                <p className="mt-3 text-[13px] leading-relaxed text-ink">
+                  {explanationLabel(comp.verdict.explanation)}
+                </p>
+              )}
 
               {comp.verdict.absolute_difference !== null && (
                 <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13.5px] tabular-nums text-ink-strong">
