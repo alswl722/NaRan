@@ -51,7 +51,7 @@ export function PdfPanel({
             <span className="text-[13px] text-faint">표시할 주장이 없습니다</span>
           )}
         </div>
-        {claimDetails.length > 1 && (
+        {claimDetails.length > 0 && (
           <div
             className="flex shrink-0 items-center gap-1 rounded-full bg-bg p-1"
             aria-label="배출량 범위 선택"
