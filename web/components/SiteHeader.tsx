@@ -27,8 +27,18 @@ export function SiteHeader() {
           </Link>
           <nav className="flex items-center gap-1 text-[13.5px]">
             <Link
+              href="/dashboard"
+              className={`rounded-full px-3.5 py-2 font-semibold ${
+                pathname?.startsWith("/dashboard")
+                  ? "bg-brand-soft text-ink-strong"
+                  : "text-muted hover:bg-brand-soft hover:text-ink-strong"
+              }`}
+            >
+              현황
+            </Link>
+            <Link
               href="/cases"
-              className={`rounded-full px-3.5 py-2 font-semibold transition-colors ${
+              className={`rounded-full px-3.5 py-2 font-semibold ${
                 pathname?.startsWith("/cases")
                   ? "bg-brand-soft text-ink-strong"
                   : "text-muted hover:bg-brand-soft hover:text-ink-strong"

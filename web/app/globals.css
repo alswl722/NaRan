@@ -66,6 +66,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* details 토글의 브라우저 기본 화살표 제거 — ToggleSummary가 자체 아이콘을 그린다 */
+summary::-webkit-details-marker {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

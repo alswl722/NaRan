@@ -1,65 +1,66 @@
-import type { TraceEvent, TraceStepType } from "@/lib/types";
+import type { TraceEvent } from "@/lib/types";
 
-/** 색이 아니라 아이콘 모양 + 텍스트 라벨로 계획/관찰/행동을 구분한다. */
-const STEP_ICON: Record<TraceStepType, string> = {
-  계획: "◇",
-  관찰: "◎",
-  행동: "▶",
-};
-
+/** 트레이스는 실행마다 쌓인다 — 고정 높이 스크롤 영역 안에 한 줄 요약으로 담고,
+ * 도구명·근거처럼 감사에만 필요한 세부 정보는 펼치기 전까지 숨긴다. */
 export function TraceTimeline({ events }: { events: TraceEvent[] }) {
   if (events.length === 0) {
     return <p className="text-[13px] text-faint">트레이스가 없습니다.</p>;
   }
 
   return (
-    <ol className="flex flex-col gap-2">
-      {events.map((event, i) => {
-        const isStop = event.stage === "계산 중단" || event.stage === "목표 계산 중단";
-        return (
-          <li
-            key={i}
-            className="trace-enter rounded-xl border border-line bg-surface px-4 py-3"
-            style={{ animationDelay: `${i * 70}ms` }}
-          >
-            <div className="flex items-start gap-2.5">
+    <div className="max-h-80 overflow-y-auto pr-1">
+      <ol className="flex flex-col">
+        {events.map((event, i) => {
+          const isStop = event.stage === "계산 중단" || event.stage === "목표 계산 중단";
+          const last = i === events.length - 1;
+          const hasDetail = event.tool_name || event.evidence.length > 0;
+          return (
+            <li key={i} className="relative flex gap-3 pb-3 last:pb-0">
+              {!last && <span className="absolute left-[5px] top-4 h-full w-px bg-line" />}
               <span
-                className="mt-0.5 shrink-0 text-[13px]"
-                style={{ color: isStop ? "var(--color-status-not-comparable)" : "var(--color-ink)" }}
-              >
-                {STEP_ICON[event.step_type]}
-              </span>
+                className={`relative z-10 mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+                  isStop ? "bg-brand" : "bg-faint"
+                }`}
+              />
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-[11px] font-medium text-faint">{event.step_type}</span>
-                  <span
-                    className={`text-[13.5px] font-semibold ${
-                      isStop ? "text-status-not-comparable" : "text-ink-strong"
-                    }`}
-                  >
+                <div className="flex items-baseline gap-1.5">
+                  <span className="shrink-0 text-[11px] font-medium text-faint">
+                    {event.step_type}
+                  </span>
+                  <span className="truncate text-[13px] font-semibold text-ink-strong">
                     {event.stage}
                   </span>
-                  {event.tool_name && (
-                    <span className="font-mono text-[11px] text-faint">{event.tool_name}</span>
-                  )}
                 </div>
-                <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink">
+                <p
+                  className="mt-0.5 truncate text-[12.5px] text-ink"
+                  title={event.input_summary}
+                >
                   {event.input_summary}
                 </p>
-                {event.evidence.length > 0 && (
-                  <ul className="mt-1.5 flex flex-col gap-0.5">
-                    {event.evidence.map((e, j) => (
-                      <li key={j} className="text-[12px] text-faint">
-                        · {e}
-                      </li>
-                    ))}
-                  </ul>
+                {hasDetail && (
+                  <details className="mt-0.5">
+                    <summary className="cursor-pointer text-[11px] text-faint select-none">
+                      세부 정보
+                    </summary>
+                    <div className="mt-1 flex flex-col gap-0.5">
+                      {event.tool_name && (
+                        <span className="font-mono text-[11px] text-muted">
+                          {event.tool_name}
+                        </span>
+                      )}
+                      {event.evidence.map((e, j) => (
+                        <span key={j} className="text-[11.5px] text-faint">
+                          · {e}
+                        </span>
+                      ))}
+                    </div>
+                  </details>
                 )}
               </div>
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }

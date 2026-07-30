@@ -3,20 +3,9 @@
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
 import type { CaseSummary, ClaimDetail, ReviewRecord, RunSummary, TraceEvent } from "@/lib/types";
 import { ClaimCard } from "@/components/ClaimCard";
-import { TraceTimeline } from "@/components/TraceTimeline";
 import { HitlPanel } from "@/components/HitlPanel";
-
-/** run.logical_key("run-case-a-claim-a-scope1-fact-...")에서 이 run이 다룬
- * claim의 사람이 읽는 라벨(예: "Scope 1 온실가스 배출량")을 되짚는다. */
-function runLabel(logicalKey: string, claims: ClaimDetail[]): string {
-  const matched = claims.find((d) => logicalKey.includes(`-${d.claim.id}-`));
-  if (!matched) return logicalKey;
-  const { metric, scope } = matched.claim;
-  return scope ? `${scope} ${metric}` : metric;
-}
 
 type RunWithTrace = { run: RunSummary; trace: TraceEvent[] };
 
@@ -109,6 +98,10 @@ export default function CaseDetailPage({
   const notComparableClaims = claimDetails.filter((d) =>
     d.comparisons.some((c) => c.verdict.status === "비교 불가"),
   );
+  const followUpQuestion =
+    claimDetails
+      .flatMap((d) => d.comparisons.map((c) => c.verdict.follow_up_question))
+      .find((q) => q !== null) ?? null;
 
   return (
     <div className="w-full flex-1 px-8 py-8 lg:px-12">
@@ -116,7 +109,7 @@ export default function CaseDetailPage({
         ← 대기열로
       </Link>
 
-      <header className="mt-3 mb-6 step-enter">
+      <header className="mt-3 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold text-ink-strong">
             {caseSummary.company_name ?? caseSummary.company_id}
@@ -135,7 +128,7 @@ export default function CaseDetailPage({
           type="button"
           onClick={runAnalysis}
           disabled={analyzing}
-          className="mt-4 rounded-xl bg-brand px-5 py-2.5 text-[14px] font-semibold text-ink-strong shadow-float transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-4 rounded-xl bg-brand px-5 py-2.5 text-[14px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
         >
           {analyzing ? "분석 실행 중…" : analyzed ? "다시 분석 실행" : "분석 시작"}
         </button>
@@ -144,47 +137,42 @@ export default function CaseDetailPage({
 
       {/* 장면 2 — 비교 불가 사례는 계산 중단 사실을 가장 먼저 강조한다 */}
       {notComparableClaims.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-status-not-comparable/30 bg-status-not-comparable/5 p-5 step-enter">
-          <h2 className="text-[14px] font-bold text-ink-strong">계산이 중단되었습니다</h2>
-          <p className="mt-1 text-[13px] text-ink">
-            보고서 값과 공개 데이터의 조직·지역 범위가 달라 차이를 계산하지 않았습니다. 동일한
-            범위의 자료를 요청해 주세요.
-          </p>
+        <div className="mb-6 flex items-start gap-2.5 rounded-2xl bg-brand-soft p-5">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+          <div>
+            <h2 className="text-[14px] font-bold text-ink-strong">계산이 중단되었습니다</h2>
+            <p className="mt-1 text-[13px] text-ink">
+              보고서 값과 공개 데이터의 조직·지역 범위가 달라 차이를 계산하지 않았습니다. 동일한
+              범위의 자료를 요청해 주세요.
+            </p>
+          </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        {/* 본문 — 주장 카드(장면 3·4) */}
+        {/* 본문 — 주장 카드(장면 3·4) + 그 주장을 다룬 실행의 트레이스(장면 2) */}
         <section className="flex flex-col gap-4">
           {claimDetails.map((detail) => (
-            <ClaimCard key={detail.claim.id} detail={detail} />
+            <ClaimCard
+              key={detail.claim.id}
+              detail={detail}
+              runs={runsWithTrace.filter(({ run }) =>
+                run.logical_key.includes(`-${detail.claim.id}-`),
+              )}
+            />
           ))}
         </section>
 
-        {/* 사이드 — 트레이스(장면 2) + HITL */}
+        {/* 사이드 — HITL */}
         <div className="flex flex-col gap-6">
-          {runsWithTrace.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-[15px] font-bold text-ink-strong">트레이스</h2>
-              <div className="flex flex-col gap-4">
-                {runsWithTrace.map(({ run, trace }) => (
-                  <div key={run.id} className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-                    <div className="mb-3 flex items-center justify-between text-[12.5px]">
-                      <span className="font-semibold text-ink-strong">
-                        {runLabel(run.logical_key, claimDetails)}
-                      </span>
-                      <span className="text-faint">{formatDateTime(run.started_at)}</span>
-                    </div>
-                    <TraceTimeline events={trace} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           <section>
             <h2 className="mb-3 text-[15px] font-bold text-ink-strong">HITL</h2>
-            <HitlPanel caseId={caseId} history={reviewHistory} onHistoryChange={setReviewHistory} />
+            <HitlPanel
+              caseId={caseId}
+              history={reviewHistory}
+              onHistoryChange={setReviewHistory}
+              followUpQuestion={followUpQuestion}
+            />
           </section>
         </div>
       </div>

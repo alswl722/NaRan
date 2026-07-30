@@ -21,19 +21,15 @@ const FIELD_LABEL: Record<string, string> = {
   period: "보고기간",
 };
 
-const STATUS_STYLE: Record<string, string> = {
-  일치: "text-status-match bg-status-match/10",
-  불일치: "text-status-unexplained bg-status-unexplained/10",
-  누락: "text-status-possible bg-status-possible/10",
-  "해당 없음": "text-faint bg-faint/10",
-};
+// 불일치·누락은 위험이 아니라 "눈여겨볼 지점"이라 브랜드색으로, 나머지는 중립으로 표시한다.
+const NEEDS_ATTENTION = new Set(["불일치", "누락"]);
 
 export function ComparabilityTable({ result }: { result: ComparabilityResult }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-line">
+    <div className="overflow-x-auto rounded-xl bg-bg">
       <table className="w-full min-w-[520px] text-left text-[13px]">
         <thead>
-          <tr className="border-b border-line bg-bg text-[12px] text-faint">
+          <tr className="text-[12px] text-faint">
             <th className="px-3 py-2 font-medium">조건</th>
             <th className="px-3 py-2 font-medium">주장값</th>
             <th className="px-3 py-2 font-medium">공개값</th>
@@ -42,7 +38,7 @@ export function ComparabilityTable({ result }: { result: ComparabilityResult }) 
         </thead>
         <tbody>
           {result.conditions.map((c) => (
-            <tr key={c.field} className="border-b border-line last:border-0">
+            <tr key={c.field}>
               <td className="px-3 py-2 font-medium text-ink-strong">
                 {FIELD_LABEL[c.field] ?? c.field}
               </td>
@@ -50,10 +46,13 @@ export function ComparabilityTable({ result }: { result: ComparabilityResult }) 
               <td className="px-3 py-2 tabular-nums text-ink">{displayValue(c.field, c.public_value)}</td>
               <td className="px-3 py-2">
                 <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${
-                    STATUS_STYLE[c.status] ?? "text-faint bg-faint/10"
+                  className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold ${
+                    NEEDS_ATTENTION.has(c.status) ? "text-ink-strong" : "text-faint"
                   }`}
                 >
+                  {NEEDS_ATTENTION.has(c.status) && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                  )}
                   {c.status}
                 </span>
                 {c.reason && <div className="mt-0.5 text-[11.5px] text-faint">{c.reason}</div>}
