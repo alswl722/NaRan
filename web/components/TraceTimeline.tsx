@@ -4,7 +4,7 @@ import type { TraceEvent } from "@/lib/types";
  * 도구명·근거처럼 감사에만 필요한 세부 정보는 펼치기 전까지 숨긴다. */
 export function TraceTimeline({ events }: { events: TraceEvent[] }) {
   if (events.length === 0) {
-    return <p className="text-[13px] text-faint">트레이스가 없습니다.</p>;
+    return <p className="text-[13px] text-faint">기록된 분석 과정이 없습니다.</p>;
   }
 
   return (

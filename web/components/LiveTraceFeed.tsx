@@ -29,7 +29,11 @@ type LogLine = { type: StepType; tool: string; message: string };
 const SCRIPT: LogLine[] = [
   { type: "계획", tool: "", message: "주장 근거 확인 → 공개 데이터 확인 → 비교 가능성 검사 → 조건부 수치 대조" },
   { type: "관찰", tool: "claim.verified_input", message: "실적주장 · 온실가스 배출량 · 보고서 p.68 확인" },
-  { type: "행동", tool: "public_data.snapshot", message: "env-info 공개 데이터(수원사업장) 조회 완료" },
+  {
+    type: "행동",
+    tool: "public_data.snapshot",
+    message: "환경정보공개시스템 수원사업장 데이터 조회 완료",
+  },
   { type: "관찰", tool: "comparability.check", message: "조직경계 불일치 · 지역경계 불일치 확인 — 연결 전사 vs 개별 사업장" },
   { type: "행동", tool: "compare.stop", message: "조직 및 지역 범위가 달라 계산을 중단함" },
   { type: "행동", tool: "review.route", message: "동일 범위 자료 요청과 함께 담당자 검토 대기열로 전달" },
@@ -91,7 +95,7 @@ export function LiveTraceFeed() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
           </span>
           <span className="text-[11.5px] font-bold tracking-wide text-ink-strong">
-            실제 판단 트레이스
+            실제 분석 과정
           </span>
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-semibold text-ink-strong">
             사례 B · 삼성전자

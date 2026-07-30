@@ -9,6 +9,7 @@ export function formatDecimal(value: string | null | undefined): string {
   if (value === null || value === undefined) return "—";
   const num = Number(value);
   if (!Number.isFinite(num)) return value;
+  if (num === 0) return "0";
 
   // 소수부의 의미 없는 후행 0만 제거 — 유효 소수 자릿수는 그대로 둔다.
   const trimmed = value.includes(".") ? value.replace(/0+$/, "").replace(/\.$/, "") : value;
@@ -63,9 +64,9 @@ export function publicFactSentence(fact: {
   source_url: string;
 }): string {
   const source = fact.source_url.includes("env-info.kr")
-    ? "환경정보공개시스템(env-info) 공개 데이터"
+    ? "환경정보공개시스템 공개 데이터"
     : fact.source_url.includes("gir.go.kr")
-      ? "온실가스종합정보센터(GIR) 공개 데이터"
+      ? "온실가스종합정보센터 공개 데이터"
       : "공개 데이터";
   const parts = [source, fact.scope, formatValueWithUnit(fact.raw_value, fact.unit)].filter(
     Boolean,

@@ -179,7 +179,7 @@ export default function DashboardPage() {
                 <p className="text-[12.5px] leading-relaxed text-ink">{f.explanation}</p>
                 {f.absoluteDifference !== null && (
                   <p className="mt-1 text-[12px] tabular-nums text-ink-strong">
-                    절대 차이 {formatValueWithUnit(f.absoluteDifference, f.unit)}
+                    수치 차이 {formatValueWithUnit(f.absoluteDifference, f.unit)}
                     {f.relativeDifferencePct !== null &&
                       ` · 상대 차이율 ${formatDecimal(f.relativeDifferencePct)}%`}
                   </p>

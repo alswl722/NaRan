@@ -4,7 +4,12 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ComparabilityTable } from "@/components/ComparabilityTable";
 import { HighlightedText } from "@/components/HighlightedText";
 import { TraceTimeline } from "@/components/TraceTimeline";
-import { extractionModeLabel, matchTypeLabel } from "@/lib/labels";
+import {
+  explanationLabel,
+  extractionModeLabel,
+  matchTypeLabel,
+  reviewReasonLabel,
+} from "@/lib/labels";
 import {
   formatDateOnly,
   formatDateRange,
@@ -114,7 +119,6 @@ export function ClaimCard({
           <div className="text-[19px] font-bold tabular-nums text-ink-strong">
             {formatValueWithUnit(claim.value, claim.unit)}
           </div>
-          <div className="text-[11px] text-faint">보고서 p.{claim.page}</div>
         </div>
       </div>
 
@@ -218,12 +222,14 @@ export function ClaimCard({
                 </div>
               </div>
 
-              <p className="mt-3 text-[13px] leading-relaxed text-ink">{comp.verdict.explanation}</p>
+              <p className="mt-3 text-[13px] leading-relaxed text-ink">
+                {explanationLabel(comp.verdict.explanation)}
+              </p>
 
               {comp.verdict.absolute_difference !== null && (
                 <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13.5px] tabular-nums text-ink-strong">
                   <span>
-                    절대 차이{" "}
+                    수치 차이{" "}
                     <strong>{formatValueWithUnit(comp.verdict.absolute_difference, claim.unit)}</strong>
                   </span>
                   {comp.verdict.relative_difference_pct !== null && (
@@ -236,23 +242,32 @@ export function ClaimCard({
               )}
 
               {comp.verdict.review_required && comp.verdict.review_reasons.length > 0 && (
-                <p className="mt-2 text-[12px] text-muted">
-                  {comp.verdict.review_reasons.join(" · ")}
-                </p>
+                <div className="mt-3 rounded-sm border border-brand/40 bg-brand-soft px-3 py-2.5">
+                  <div className="text-[11px] font-semibold text-muted">담당자 확인 사항</div>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[12.5px] text-ink">
+                    {comp.verdict.review_reasons.map((reason) => (
+                      <li key={reason}>{reviewReasonLabel(reason)}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
               {comp.public_fact && (
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-faint">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-line bg-bg/60 px-3 py-2.5">
+                  <div>
+                    <div className="text-[11px] font-semibold text-faint">공개 데이터 출처</div>
+                    <div className="mt-0.5 text-[12px] text-muted">
+                      데이터 조회일 {formatDateOnly(comp.public_fact.retrieved_at)}
+                    </div>
+                  </div>
                   <a
                     href={comp.public_fact.source_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="underline decoration-dotted underline-offset-2 hover:text-brand"
+                    className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-[11.5px] font-semibold text-ink-strong hover:border-brand"
                   >
-                    출처 보기
+                    원문 열기
                   </a>
-                  <span>조회일 {formatDateOnly(comp.public_fact.retrieved_at)}</span>
-                  <span>버전 {comp.public_fact.version}</span>
                 </div>
               )}
 
@@ -272,10 +287,10 @@ export function ClaimCard({
 
           {runs.length > 0 && (
             <section className="border-t border-line pt-5">
-              <SectionLabel>트레이스</SectionLabel>
+              <SectionLabel>분석 과정</SectionLabel>
               <details className="group" onClick={(e) => e.stopPropagation()}>
                 <ToggleSummary>
-                  트레이스 보기 · {formatDateTime(runs[0].run.started_at)}
+                  분석 과정 보기 · {formatDateTime(runs[0].run.started_at)}
                   {runs.length > 1 && ` (이전 실행 ${runs.length - 1}건 더 있음)`}
                 </ToggleSummary>
                 <div className="mt-2">

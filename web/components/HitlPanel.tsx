@@ -7,7 +7,7 @@ import type { ReviewAction, ReviewRecord } from "@/lib/types";
 
 const ACTION_INFO: Record<ReviewAction, string> = {
   "추가 자료 요청": "동일한 비교 범위의 자료를 다시 요청합니다",
-  "검토 완료": "현재 AI 판단에 대한 담당자 검토를 마칩니다",
+  "검토 완료": "현재 분석 결과에 대한 담당자 검토를 마칩니다",
   보류: "추가 판단 없이 보류 상태로 둡니다",
 };
 const ACTIONS = Object.keys(ACTION_INFO) as ReviewAction[];
@@ -68,7 +68,7 @@ export function HitlPanel({
 
   return (
     <div className="rounded-2xl bg-surface p-5 shadow-card">
-      <h2 className="text-[15px] font-bold text-ink-strong">담당자 조치</h2>
+      <h2 className="text-[15px] font-bold text-ink-strong">담당자 검토 및 조치</h2>
       <p className="mt-1 text-[12.5px] text-faint">
         AI 분석 결과는 여기서 바뀌지 않습니다. 담당자 조치는 별도로 이력에 남습니다.
       </p>

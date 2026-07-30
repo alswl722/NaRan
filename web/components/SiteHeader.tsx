@@ -57,7 +57,6 @@ export function SiteHeader() {
             <div className="text-xs font-semibold text-ink-strong">
               관리 담당자
             </div>
-            <div className="text-[10px] text-faint">데모용 계정</div>
           </div>
         </div>
       </div>

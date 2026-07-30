@@ -182,7 +182,7 @@ export default function CaseDetailPage({
                 analysisMode === "demo" ? "bg-ink-strong text-white" : "text-muted"
               }`}
             >
-              저장값 데모
+              검증 저장값
             </button>
             <button
               type="button"
@@ -234,10 +234,10 @@ export default function CaseDetailPage({
           >
             <span className="font-bold">
               {lastExecution.execution_mode === "live"
-                ? "LIVE · Gemini 실시간 추출"
+                ? "Gemini 실시간 분석 완료"
                 : lastExecution.execution_mode === "fallback"
-                  ? "FALLBACK · 저장값 사용"
-                  : "DEMO · 검증 저장값"}
+                  ? "실시간 분석 실패 · 검증값 사용"
+                  : "검증 저장값으로 분석 완료"}
             </span>
             <span className="ml-2">
               {lastExecution.model ? `${lastExecution.model} · ` : ""}
@@ -310,9 +310,8 @@ export default function CaseDetailPage({
         </section>
       </div>
 
-      {/* HITL — claim 카드들 아래, 전체 폭으로 배치해 사이드바 좁은 폭 제약을 없앤다 */}
+      {/* 담당자 검토 — claim 카드들 아래, 전체 폭으로 배치한다. */}
       <section className="mt-6">
-        <h2 className="mb-3 text-[15px] font-bold text-ink-strong">HITL</h2>
         <HitlPanel
           caseId={caseId}
           history={reviewHistory}
