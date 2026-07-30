@@ -46,6 +46,9 @@ export function HitlPanel({
   const pendingItemCount = reviewItems.filter(
     (item) => item.resolution?.resolution !== "확인 완료",
   ).length;
+  const pendingReviewItems = reviewItems.filter(
+    (item) => item.resolution?.resolution !== "확인 완료",
+  );
   const compactStatus =
     reviewItems.length > 0
       ? pendingItemCount === 0
@@ -130,11 +133,11 @@ export function HitlPanel({
         AI 분석 결과는 여기서 바뀌지 않습니다. 담당자 조치는 별도로 이력에 남습니다.
       </p>
 
-      {reviewItems.length > 0 && (
+      {pendingReviewItems.length > 0 && (
         <div className="mt-3 rounded-xl border border-brand/40 bg-brand-soft px-3.5 py-3">
           <div className="text-[11px] font-semibold text-muted">이번 검토에서 확인할 사항</div>
           <div className="mt-2 divide-y divide-brand/20">
-            {reviewItems.map((item) => {
+            {pendingReviewItems.map((item) => {
               const key = `${item.verdict_id}:${item.reason}`;
               const confirmed = item.resolution?.resolution === "확인 완료";
               return (
