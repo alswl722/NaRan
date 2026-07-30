@@ -14,10 +14,56 @@ from sqlalchemy.orm import Session
 from api.agent.pipeline import CaseAnalysis
 from db.models import (
     AnalysisRunRecord,
+    Claim as ClaimRecord,
     ComparabilityResultRecord,
     TraceEventRecord,
     VerdictRecord,
 )
+
+
+def _persist_claims(session: Session, case_analysis: CaseAnalysis) -> None:
+    """live 추출 Claim을 판정·트레이스와 같은 트랜잭션에 저장한다."""
+
+    for extraction in case_analysis.extractions:
+        for claim in extraction.claims:
+            existing = session.get(ClaimRecord, claim.id)
+            if existing is not None:
+                continue
+            session.add(
+                ClaimRecord(
+                    id=claim.id,
+                    report_id=claim.report_id,
+                    claim_type=claim.claim_type.value,
+                    metric=claim.metric,
+                    value=claim.value,
+                    unit=claim.unit,
+                    value_basis=(
+                        claim.value_basis.value if claim.value_basis else None
+                    ),
+                    period_start=claim.period_start,
+                    period_end=claim.period_end,
+                    baseline_year=claim.baseline_year,
+                    target_year=claim.target_year,
+                    scope=claim.scope.value if claim.scope else None,
+                    scope2_method=(
+                        claim.scope2_method.value if claim.scope2_method else None
+                    ),
+                    organization_boundary=(
+                        claim.organization_boundary.value
+                        if claim.organization_boundary
+                        else None
+                    ),
+                    geographic_boundary=claim.geographic_boundary,
+                    entity_level=(
+                        claim.entity_level.value if claim.entity_level else None
+                    ),
+                    raw_text=claim.raw_text,
+                    page=claim.page,
+                    evidence=claim.evidence,
+                    confidence=claim.confidence,
+                    extraction_mode=claim.extraction_mode.value,
+                )
+            )
 
 
 def _decimal_str(value) -> str | None:
@@ -38,6 +84,7 @@ def persist_case_analysis(
     """
 
     now = datetime.now(timezone.utc)
+    _persist_claims(session, case_analysis)
     for run in case_analysis.runs:
         run_row_id = str(uuid.uuid4())
         session.add(

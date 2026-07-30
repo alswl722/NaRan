@@ -7,7 +7,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 /** /cases/{id}/analyze는 규칙 엔진 전체(비교 가능성 검사·대조·트레이스 기록)를 도니 더 길게 허용. */
-export const ANALYZE_TIMEOUT_MS = 30_000;
+export const ANALYZE_TIMEOUT_MS = 180_000;
 
 export class ApiError extends Error {
   status: number;

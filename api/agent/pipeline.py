@@ -106,9 +106,39 @@ def analyze_verified_case(
         )
         for page in pages
     )
+    return analyze_case_extractions(
+        case_data,
+        extractions=extractions,
+        entity_map=entity_map,
+    )
+
+
+def analyze_case_extractions(
+    case_data: dict,
+    *,
+    extractions: tuple[ExtractionResult, ...],
+    entity_map: EntityMap = DEFAULT_ENTITY_MAP,
+    skip_unmatched_claims: bool = False,
+) -> CaseAnalysis:
+    """live 또는 검증 캐시에서 구조화된 Claim을 같은 규칙 엔진으로 분석한다."""
+
+    company = Company.model_validate(case_data["company"])
+    report = Report.model_validate(case_data["report"])
+    monitoring_case = MonitoringCase.model_validate(case_data["monitoring_case"])
+    if report.company_id != company.id:
+        raise ValueError("Report와 Company의 company_id가 일치하지 않습니다")
+    if monitoring_case.company_id != company.id:
+        raise ValueError("MonitoringCase와 Company의 company_id가 일치하지 않습니다")
+    if monitoring_case.report_id != report.id:
+        raise ValueError("MonitoringCase와 Report의 report_id가 일치하지 않습니다")
+    if not extractions:
+        raise ValueError("분석할 Claim 추출 결과가 없습니다")
+
     claims = tuple(
         claim for extraction in extractions for claim in extraction.claims
     )
+    if not claims:
+        raise ValueError("분석할 Claim이 없습니다")
     claim_ids = [claim.id for claim in claims]
     if len(claim_ids) != len(set(claim_ids)):
         raise ValueError("검증 Claim 캐시에 중복 ID가 있습니다")
@@ -126,6 +156,8 @@ def analyze_verified_case(
     for claim in claims:
         facts = _matching_facts(claim, public_facts)
         if not facts:
+            if skip_unmatched_claims:
+                continue
             raise ValueError(f"Claim {claim.id}에 대응하는 PublicFact가 없습니다")
         for fact in facts:
             mapping = None
@@ -146,7 +178,6 @@ def analyze_verified_case(
                 run_lock=run_lock,
             )
             runs.append(run)
-
     return CaseAnalysis(
         company=company,
         report=report,

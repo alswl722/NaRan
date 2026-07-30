@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
-import { apiGet, apiPost, ApiError } from "@/lib/api";
-import type { CaseSummary, ClaimDetail, ReviewRecord, RunSummary, TraceEvent } from "@/lib/types";
+import { ANALYZE_TIMEOUT_MS, apiGet, apiPost, ApiError } from "@/lib/api";
+import type {
+  AnalyzeExecution,
+  AnalyzeResponse,
+  CaseSummary,
+  ClaimDetail,
+  ReviewRecord,
+  RunSummary,
+  TraceEvent,
+} from "@/lib/types";
 import { ClaimCard } from "@/components/ClaimCard";
 import { HitlPanel } from "@/components/HitlPanel";
 
@@ -21,6 +29,9 @@ export default function CaseDetailPage({
   const [runsWithTrace, setRunsWithTrace] = useState<RunWithTrace[]>([]);
   const [reviewHistory, setReviewHistory] = useState<ReviewRecord[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<"demo" | "live">("demo");
+  const [allowCacheFallback, setAllowCacheFallback] = useState(true);
+  const [lastExecution, setLastExecution] = useState<AnalyzeExecution | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
@@ -68,7 +79,15 @@ export default function CaseDetailPage({
     setAnalyzing(true);
     setError(null);
     try {
-      await apiPost(`/cases/${caseId}/analyze`, undefined, 30_000);
+      const response = await apiPost<AnalyzeResponse>(
+        `/cases/${caseId}/analyze`,
+        {
+          mode: analysisMode,
+          allow_cache_fallback: analysisMode === "live" && allowCacheFallback,
+        },
+        ANALYZE_TIMEOUT_MS,
+      );
+      setLastExecution(response.execution);
       await loadAll();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "분석 실행에 실패했습니다");
@@ -124,14 +143,94 @@ export default function CaseDetailPage({
           {caseSummary.report_title} · {caseSummary.case_type}
         </p>
 
-        <button
-          type="button"
-          onClick={runAnalysis}
-          disabled={analyzing}
-          className="mt-4 rounded-xl bg-brand px-5 py-2.5 text-[14px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {analyzing ? "분석 실행 중…" : analyzed ? "다시 분석 실행" : "분석 시작"}
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex rounded-xl border border-line bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setAnalysisMode("demo")}
+              disabled={analyzing}
+              className={`rounded-lg px-3 py-1.5 text-[12.5px] font-semibold ${
+                analysisMode === "demo" ? "bg-ink-strong text-white" : "text-muted"
+              }`}
+            >
+              저장값 데모
+            </button>
+            <button
+              type="button"
+              onClick={() => setAnalysisMode("live")}
+              disabled={analyzing}
+              className={`rounded-lg px-3 py-1.5 text-[12.5px] font-semibold ${
+                analysisMode === "live" ? "bg-brand text-ink-strong" : "text-muted"
+              }`}
+            >
+              Gemini 실시간
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={runAnalysis}
+            disabled={analyzing}
+            className="rounded-xl bg-brand px-5 py-2.5 text-[14px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {analyzing
+              ? analysisMode === "live"
+                ? "Gemini 분석 중…"
+                : "분석 실행 중…"
+              : analyzed
+                ? "다시 분석 실행"
+                : "분석 시작"}
+          </button>
+        </div>
+        {analysisMode === "live" && (
+          <label className="mt-2 flex items-center gap-2 text-[12.5px] text-muted">
+            <input
+              type="checkbox"
+              checked={allowCacheFallback}
+              onChange={(event) => setAllowCacheFallback(event.target.checked)}
+              disabled={analyzing}
+              className="accent-brand"
+            />
+            Gemini 실패 시 검증된 저장값 사용
+          </label>
+        )}
+        {lastExecution && (
+          <div
+            className={`mt-3 rounded-xl border px-4 py-3 text-[12.5px] ${
+              lastExecution.execution_mode === "live"
+                ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                : lastExecution.execution_mode === "fallback"
+                  ? "border-amber-300 bg-amber-50 text-amber-900"
+                  : "border-line bg-white text-muted"
+            }`}
+          >
+            <span className="font-bold">
+              {lastExecution.execution_mode === "live"
+                ? "LIVE · Gemini 실시간 추출"
+                : lastExecution.execution_mode === "fallback"
+                  ? "FALLBACK · 저장값 사용"
+                  : "DEMO · 검증 저장값"}
+            </span>
+            <span className="ml-2">
+              {lastExecution.model ? `${lastExecution.model} · ` : ""}
+              p.{lastExecution.pages.join(", ")} · 시도 {lastExecution.attempts}회
+            </span>
+            <p className="mt-1">
+              추출 {lastExecution.extracted_claim_count}건 · 공개 데이터 대조{" "}
+              {lastExecution.compared_claim_count}건
+            </p>
+            {lastExecution.fallback_reasons.length > 0 && (
+              <p className="mt-1 break-words">
+                {lastExecution.fallback_reasons.join(" | ")}
+              </p>
+            )}
+            {lastExecution.skipped_claims.length > 0 && (
+              <p className="mt-1">
+                공개 데이터가 없어 대조를 건너뛴 주장{" "}
+                {lastExecution.skipped_claims.length}건
+              </p>
+            )}
+          </div>
+        )}
         {error && <p className="mt-2 text-[13px] text-status-unexplained">{error}</p>}
       </header>
 

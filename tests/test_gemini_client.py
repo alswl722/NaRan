@@ -99,6 +99,7 @@ def test_structured_output_request_uses_schema_and_safe_prompt() -> None:
     assert call["timeout"] == 12
     config = call["json"]["generationConfig"]
     assert config["temperature"] == 0
+    assert config["responseFormat"]["text"]["mimeType"] == "APPLICATION_JSON"
     assert config["responseFormat"]["text"]["schema"] == schema
     prompt = call["json"]["contents"][0]["parts"][0]["text"]
     assert DEFAULT_PROMPT_VERSION in prompt

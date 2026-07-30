@@ -15,6 +15,7 @@ services:
       - ./db:/app/db
       - ./naran:/app/naran
       - ./fixtures:/app/fixtures
+      - ./references:/app/references:ro
       - naran-sqlite:/app/data # SQLite 폴백 파일을 명명 볼륨에 보존(컨테이너 재생성에도 유지)
     working_dir: /app
     environment:

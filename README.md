@@ -54,8 +54,8 @@ cp .env.example .env
 
 ```dotenv
 GEMINI_API_KEY=발급받은_API_키
-GEMINI_MODEL=gemini-2.5-flash
-GEMINI_TIMEOUT_SECONDS=30
+GEMINI_MODEL=gemini-3.6-flash
+GEMINI_TIMEOUT_SECONDS=60
 ```
 
 레퍼런스 PDF의 지정 페이지를 실제 Gemini structured output으로 추출한다.

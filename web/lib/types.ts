@@ -32,6 +32,29 @@ export type CaseSummary = {
   claim_ids: string[];
 };
 
+export type AnalyzeExecution = {
+  requested_mode: "demo" | "live";
+  execution_mode: "live" | "verified_cache" | "fallback";
+  model: string | null;
+  pages: number[];
+  attempts: number;
+  fallback_reasons: string[];
+  extracted_claim_count: number;
+  compared_claim_count: number;
+  skipped_claims: {
+    id: string;
+    page: number;
+    metric: string;
+    scope: string | null;
+    reason: string;
+  }[];
+};
+
+export type AnalyzeResponse = {
+  case: CaseSummary;
+  execution: AnalyzeExecution;
+};
+
 export type RunSummary = {
   id: string;
   logical_key: string;

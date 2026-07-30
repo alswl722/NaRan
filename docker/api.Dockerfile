@@ -17,6 +17,7 @@ COPY naran ./naran
 COPY db ./db
 COPY api ./api
 COPY fixtures ./fixtures
+COPY references ./references
 
 EXPOSE 8000
 

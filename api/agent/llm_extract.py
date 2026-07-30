@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
@@ -24,7 +26,7 @@ from naran.contracts import (
 )
 
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
 DEFAULT_PROMPT_VERSION = "claim-extract-v1"
 DEFAULT_SCHEMA_VERSION = "claim-draft-v1"
 
@@ -209,6 +211,29 @@ def _claim_id(report_id: str, page: int, index: int, raw_text: str) -> str:
     return f"claim-{report_id}-{page}-{index}-{suffix}"
 
 
+def _normalize_period_date(value: str | None, *, period_end: bool) -> str | None:
+    """표현 형식만 ISO 날짜로 정규화하며, 알 수 없는 날짜는 추론하지 않는다."""
+
+    if value is None:
+        return None
+    stripped = value.strip()
+    year_only = re.fullmatch(r"(\d{4})(?:년)?", stripped)
+    if year_only:
+        year = int(year_only.group(1))
+        return f"{year}-12-31" if period_end else f"{year}-01-01"
+    full_date = re.fullmatch(
+        r"(\d{4})(?:[./-]|년\s*)(\d{1,2})(?:[./-]|월\s*)(\d{1,2})(?:일)?",
+        stripped,
+    )
+    if not full_date:
+        return value
+    year, month, day = map(int, full_date.groups())
+    try:
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return value
+
+
 def _to_claims(
     batch: ClaimDraftBatch,
     *,
@@ -219,6 +244,14 @@ def _to_claims(
         Claim.model_validate(
             {
                 **draft.model_dump(mode="python"),
+                "period_start": _normalize_period_date(
+                    draft.period_start,
+                    period_end=False,
+                ),
+                "period_end": _normalize_period_date(
+                    draft.period_end,
+                    period_end=True,
+                ),
                 "id": _claim_id(report_id, draft.page, index, draft.raw_text),
                 "report_id": report_id,
                 "extraction_mode": mode,
@@ -292,12 +325,35 @@ def extract_claims(
             normalized_candidates = tuple(
                 " ".join(candidate.split()) for candidate in candidate_texts
             )
+            grounded_drafts: list[ClaimDraft] = []
             for draft in batch.claims:
                 normalized_raw_text = " ".join(draft.raw_text.split())
-                if normalized_raw_text not in normalized_candidates:
+                if normalized_raw_text in normalized_candidates:
+                    grounded_drafts.append(draft)
+                    continue
+                # 모델이 후보 문장의 검증 가능한 절만 잘라 반환한 경우에는
+                # 그 절이 정확히 하나의 입력 후보 안에 있을 때만 원본 후보로
+                # 되돌린다. 후보보다 긴 생성문이나 모호한 다중 매칭은 거부한다.
+                containing_candidates = [
+                    original
+                    for original, normalized in zip(
+                        candidate_texts,
+                        normalized_candidates,
+                        strict=True,
+                    )
+                    if normalized_raw_text
+                    and normalized_raw_text in normalized
+                ]
+                if len(containing_candidates) != 1:
                     raise ValueError(
                         "추출 Claim 원문이 입력 후보 문장과 정확히 일치하지 않습니다"
                     )
+                grounded_drafts.append(
+                    draft.model_copy(
+                        update={"raw_text": containing_candidates[0]}
+                    )
+                )
+            batch = ClaimDraftBatch(claims=grounded_drafts)
             claims = _to_claims(
                 batch,
                 report_id=report_id,

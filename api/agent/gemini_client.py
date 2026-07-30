@@ -7,7 +7,6 @@ import re
 from typing import Any
 
 import requests
-from dotenv import load_dotenv
 
 from api.agent.llm_extract import DEFAULT_MODEL, DEFAULT_PROMPT_VERSION
 
@@ -74,7 +73,6 @@ class GeminiStructuredClaimClient:
         timeout: float | None = None,
         session: requests.Session | None = None,
     ) -> None:
-        load_dotenv()
         resolved_key = api_key or os.getenv("GEMINI_API_KEY")
         resolved_model = model_name or os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
         try:
@@ -159,7 +157,9 @@ class GeminiStructuredClaimClient:
                     "temperature": 0,
                     "responseFormat": {
                         "text": {
-                            "mimeType": "application/json",
+                            # 최신 v1beta responseFormat는 MIME 문자열이 아니라
+                            # TextResponseFormat.MimeType enum 이름을 요구한다.
+                            "mimeType": "APPLICATION_JSON",
                             "schema": _supported_schema(output_schema),
                         }
                     },

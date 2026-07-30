@@ -189,6 +189,74 @@ def test_hallucinated_raw_text_is_rejected() -> None:
         )
 
 
+def test_unique_exact_excerpt_is_grounded_back_to_source_candidate() -> None:
+    data = case("sample_case_c.json")
+    candidate = "앞 문장. 2024년 배출량은 100,000tCO2eq입니다. 뒤 문장."
+    response = draft_batch(
+        data["claims"][0],
+        raw_text="2024년 배출량은 100,000tCO2eq입니다.",
+    )
+    client = SequenceClient([response])
+
+    result = extract_claims(
+        document_hash="sha256:grounded-excerpt",
+        report_id=data["report"]["id"],
+        page=1,
+        candidate_texts=(candidate,),
+        mode=ExecutionMode.LIVE,
+        cache=cache(),
+        client=client,
+    )
+
+    assert result.claims[0].raw_text == candidate
+
+
+def test_live_period_display_formats_are_normalized_without_value_inference() -> None:
+    data = case("sample_case_c.json")
+    response = draft_batch(
+        data["claims"][0],
+        period_start="2024.1.1",
+        period_end="2024년 12월 31일",
+    )
+    client = SequenceClient([response])
+
+    result = extract_claims(
+        document_hash="sha256:period-format",
+        report_id=data["report"]["id"],
+        page=1,
+        candidate_texts=(data["claims"][0]["raw_text"],),
+        mode=ExecutionMode.LIVE,
+        cache=cache(),
+        client=client,
+    )
+
+    assert result.claims[0].period_start == "2024-01-01"
+    assert result.claims[0].period_end == "2024-12-31"
+
+
+def test_year_only_period_is_normalized_to_annual_bounds() -> None:
+    data = case("sample_case_c.json")
+    response = draft_batch(
+        data["claims"][0],
+        period_start="2024",
+        period_end="2024년",
+    )
+    client = SequenceClient([response])
+
+    result = extract_claims(
+        document_hash="sha256:annual-period",
+        report_id=data["report"]["id"],
+        page=1,
+        candidate_texts=(data["claims"][0]["raw_text"],),
+        mode=ExecutionMode.LIVE,
+        cache=cache(),
+        client=client,
+    )
+
+    assert result.claims[0].period_start == "2024-01-01"
+    assert result.claims[0].period_end == "2024-12-31"
+
+
 def test_partial_candidate_text_cannot_validate_longer_generated_quote() -> None:
     data = case("sample_case_c.json")
     response = draft_batch(data["claims"][0])

@@ -9,15 +9,27 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from api.agent.case_lock import case_analysis_lock
+from api.agent.document_extract import extract_document_page
+from api.agent.gemini_client import (
+    GeminiConfigurationError,
+    GeminiStructuredClaimClient,
+)
 from api.agent.llm_extract import VerifiedClaimCache
 from api.agent.persist import persist_case_analysis
-from api.agent.pipeline import CaseAnalysis, analyze_verified_case
+from api.agent.pipeline import (
+    CaseAnalysis,
+    analyze_case_extractions,
+    analyze_verified_case,
+)
+from api.agent.orchestrator import RunState
 from api.routers.runs import run_summary_body
 from db.models import (
     AnalysisRunRecord,
@@ -28,12 +40,23 @@ from db.models import (
     VerdictRecord,
 )
 from db.session import get_session
+from naran.contracts import ExecutionMode, Report as ReportContract
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures"
+REFERENCES_DIR = Path(__file__).resolve().parents[2] / "references"
+REPORT_PDF_BY_ID = {
+    "report-a-2024": "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+    "report-b-2024": "Samsung_Electronics_Sustainability_Report_2025_ENG.pdf",
+}
 
 _IMPORTANCE_ORDER = {"높음": 0, "보통": 1, "낮음": 2}
+
+
+class AnalyzeCaseRequest(BaseModel):
+    mode: Literal["demo", "live"] = "demo"
+    allow_cache_fallback: bool = True
 
 
 def _case_review_required(session: Session, case_id: str) -> bool | None:
@@ -61,9 +84,31 @@ def _case_review_required(session: Session, case_id: str) -> bool | None:
 def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:
     company = session.get(Company, case.company_id)
     report = session.get(Report, case.report_id)
-    claim_ids = session.scalars(
-        select(Claim.id).where(Claim.report_id == case.report_id)
-    ).all()
+    latest_started_at = session.scalar(
+        select(func.max(AnalysisRunRecord.started_at)).where(
+            AnalysisRunRecord.monitoring_case_id == case.id
+        )
+    )
+    claim_ids: list[str]
+    if latest_started_at is not None:
+        latest_run_ids = session.scalars(
+            select(AnalysisRunRecord.id).where(
+                AnalysisRunRecord.monitoring_case_id == case.id,
+                AnalysisRunRecord.started_at == latest_started_at,
+            )
+        ).all()
+        latest_claim_ids = session.scalars(
+            select(VerdictRecord.claim_id).where(
+                VerdictRecord.run_id.in_(latest_run_ids)
+            )
+        ).all()
+        claim_ids = list(dict.fromkeys(latest_claim_ids))
+    else:
+        claim_ids = list(
+            session.scalars(
+                select(Claim.id).where(Claim.report_id == case.report_id)
+            ).all()
+        )
     return {
         "id": case.id,
         "company_id": case.company_id,
@@ -164,24 +209,160 @@ def _map_runs_to_claim_and_fact(case_analysis: CaseAnalysis) -> dict[str, tuple[
     return mapping
 
 
+def _analyze_live_case(
+    case_data: dict,
+    *,
+    allow_cache_fallback: bool,
+) -> tuple[CaseAnalysis, dict]:
+    report = ReportContract.model_validate(case_data["report"])
+    pdf_name = REPORT_PDF_BY_ID.get(report.id)
+    if pdf_name is None:
+        raise HTTPException(
+            status_code=422,
+            detail="이 사례에는 Gemini live 실행용 원본 PDF가 없습니다",
+        )
+    pdf_path = REFERENCES_DIR / pdf_name
+    if not pdf_path.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=f"Gemini live 실행용 PDF를 찾을 수 없습니다: {pdf_name}",
+        )
+    try:
+        client = GeminiStructuredClaimClient()
+    except GeminiConfigurationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    cache = (
+        VerifiedClaimCache.from_fixture_directory(FIXTURES_DIR)
+        if allow_cache_fallback
+        else VerifiedClaimCache()
+    )
+    pages = sorted({int(claim["page"]) for claim in case_data["claims"]})
+    extraction_results = []
+    attempts = 0
+    fallback_reasons: list[str] = []
+    for page in pages:
+        run = extract_document_page(
+            run_id=f"ui-live-{report.id}-{page}",
+            pdf_path=pdf_path,
+            report=report,
+            page=page,
+            mode=ExecutionMode.LIVE,
+            cache=cache,
+            client=client,
+            model_name=client.model_name,
+            prompt_version=client.prompt_version,
+        )
+        if run.state is RunState.FAILED or run.result is None:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Gemini live 추출 실패(p.{page}): {run.error}",
+            )
+        extraction_results.append(run.result)
+        attempts += run.result.attempts
+        if run.result.failure_reason:
+            fallback_reasons.append(
+                f"p.{page}: {run.result.failure_reason}"
+            )
+
+    extractions = tuple(extraction_results)
+    case_analysis = analyze_case_extractions(
+        case_data,
+        extractions=extractions,
+        skip_unmatched_claims=True,
+    )
+    matched_claim_ids = {
+        claim_id
+        for claim_id, _ in _map_runs_to_claim_and_fact(case_analysis).values()
+    }
+    extracted_claims = [
+        claim for result in extractions for claim in result.claims
+    ]
+    skipped_claims = [
+        {
+            "id": claim.id,
+            "page": claim.page,
+            "metric": claim.metric,
+            "scope": claim.scope.value if claim.scope else None,
+            "reason": "대응하는 공개 데이터 없음",
+        }
+        for claim in extracted_claims
+        if claim.id not in matched_claim_ids
+    ]
+    modes = {result.execution_mode for result in extractions}
+    execution_mode = (
+        ExecutionMode.LIVE
+        if modes == {ExecutionMode.LIVE}
+        else ExecutionMode.FALLBACK
+    )
+    return case_analysis, {
+        "requested_mode": "live",
+        "execution_mode": execution_mode.value,
+        "model": client.model_name,
+        "pages": pages,
+        "attempts": attempts,
+        "fallback_reasons": fallback_reasons,
+        "skipped_claims": skipped_claims,
+        "extracted_claim_count": len(extracted_claims),
+        "compared_claim_count": len(matched_claim_ids),
+    }
+
+
 @router.post("/{case_id}/analyze")
-def analyze_case(case_id: str, session: Session = Depends(get_session)) -> dict:
-    """검증 fixture와 api.agent.pipeline.analyze_verified_case로 분석을 실행한다."""
+def analyze_case(
+    case_id: str,
+    request: AnalyzeCaseRequest | None = None,
+    session: Session = Depends(get_session),
+) -> dict:
+    """demo 캐시 또는 실제 Gemini structured output으로 분석을 실행한다."""
 
     case = session.get(MonitoringCaseRecord, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="사례를 찾을 수 없습니다")
 
     case_data = _find_case_fixture(case_id)
+    options = request or AnalyzeCaseRequest()
 
     with case_analysis_lock(case_id):
-        cache = VerifiedClaimCache.from_fixture_directory(FIXTURES_DIR)
-        case_analysis = analyze_verified_case(case_data, cache=cache)
+        if options.mode == "live":
+            case_analysis, execution = _analyze_live_case(
+                case_data,
+                allow_cache_fallback=options.allow_cache_fallback,
+            )
+        else:
+            cache = VerifiedClaimCache.from_fixture_directory(FIXTURES_DIR)
+            case_analysis = analyze_verified_case(case_data, cache=cache)
+            execution = {
+                "requested_mode": "demo",
+                "execution_mode": ExecutionMode.VERIFIED_CACHE.value,
+                "model": None,
+                "pages": sorted(
+                    {int(claim["page"]) for claim in case_data["claims"]}
+                ),
+                "attempts": 0,
+                "fallback_reasons": [],
+                "skipped_claims": [],
+                "extracted_claim_count": sum(
+                    len(extraction.claims)
+                    for extraction in case_analysis.extractions
+                ),
+                "compared_claim_count": 0,
+            }
         claim_and_fact_ids_by_run = _map_runs_to_claim_and_fact(case_analysis)
+        if options.mode == "demo":
+            execution["compared_claim_count"] = len(
+                {
+                    claim_id
+                    for claim_id, _ in claim_and_fact_ids_by_run.values()
+                }
+            )
         persist_case_analysis(
             session,
             case_analysis,
             claim_and_fact_ids_by_run=claim_and_fact_ids_by_run,
         )
 
-    return _case_summary(session, case)
+    return {
+        "case": _case_summary(session, case),
+        "execution": execution,
+    }
