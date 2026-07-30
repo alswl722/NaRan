@@ -216,3 +216,15 @@ export type ReviewRecord = {
   previous_action: ReviewAction | null;
   follow_up_question?: string | null;
 };
+
+export type ReviewItemHistoryRecord = {
+  id: string;
+  case_id: string;
+  verdict_id: string;
+  claim_id: string;
+  review_reason: string;
+  resolution: "확인 완료" | "추가 자료 요청";
+  note: string;
+  reviewer: string;
+  processed_at: string;
+};

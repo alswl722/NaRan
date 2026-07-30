@@ -10,6 +10,7 @@ import type {
   ClaimDetail,
   ReportPdfMeta,
   ReviewItem,
+  ReviewItemHistoryRecord,
   ReviewRecord,
   RunSummary,
   TraceEvent,
@@ -32,6 +33,7 @@ export default function CaseDetailPage({
   const [claimDetails, setClaimDetails] = useState<ClaimDetail[]>([]);
   const [runsWithTrace, setRunsWithTrace] = useState<RunWithTrace[]>([]);
   const [reviewHistory, setReviewHistory] = useState<ReviewRecord[]>([]);
+  const [reviewItemHistory, setReviewItemHistory] = useState<ReviewItemHistoryRecord[]>([]);
   const [pdfAvailable, setPdfAvailable] = useState(false);
   const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -73,6 +75,10 @@ export default function CaseDetailPage({
       () => [] as ReviewRecord[],
     );
     setReviewHistory(history);
+    const itemHistory = await apiGet<ReviewItemHistoryRecord[]>(
+      `/reviews/${caseId}/items`,
+    ).catch(() => [] as ReviewItemHistoryRecord[]);
+    setReviewItemHistory(itemHistory);
   }, [caseId]);
 
   useEffect(() => {
@@ -377,6 +383,7 @@ export default function CaseDetailPage({
           onHistoryChange={setReviewHistory}
           followUpQuestion={followUpQuestion}
           reviewItems={reviewItems}
+          reviewItemHistory={reviewItemHistory}
           onReviewItemsChange={loadAll}
         />
       </section>

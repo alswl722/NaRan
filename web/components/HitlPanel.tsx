@@ -4,7 +4,12 @@ import { useState } from "react";
 import { apiGet, apiPost, ApiError } from "@/lib/api";
 import { CURRENT_USER } from "@/lib/currentUser";
 import { formatDateTime } from "@/lib/format";
-import type { ReviewAction, ReviewItem, ReviewRecord } from "@/lib/types";
+import type {
+  ReviewAction,
+  ReviewItem,
+  ReviewItemHistoryRecord,
+  ReviewRecord,
+} from "@/lib/types";
 
 const ACTION_INFO: Record<ReviewAction, string> = {
   "추가 자료 요청": "동일한 비교 범위의 자료를 다시 요청합니다",
@@ -19,6 +24,7 @@ export function HitlPanel({
   onHistoryChange,
   followUpQuestion,
   reviewItems = [],
+  reviewItemHistory = [],
   onReviewItemsChange,
 }: {
   caseId: string;
@@ -26,6 +32,7 @@ export function HitlPanel({
   onHistoryChange: (next: ReviewRecord[]) => void;
   followUpQuestion?: string | null;
   reviewItems?: ReviewItem[];
+  reviewItemHistory?: ReviewItemHistoryRecord[];
   onReviewItemsChange: () => Promise<void>;
 }) {
   const [action, setAction] = useState<ReviewAction>("추가 자료 요청");
@@ -47,6 +54,14 @@ export function HitlPanel({
       : latest
         ? `${latest.action} · ${latest.reviewer}`
         : "아직 조치 없음";
+  const auditHistory = [
+    ...history.map((record) => ({ kind: "case" as const, record })),
+    ...reviewItemHistory.map((record) => ({ kind: "item" as const, record })),
+  ].sort(
+    (a, b) =>
+      new Date(b.record.processed_at).getTime() -
+      new Date(a.record.processed_at).getTime(),
+  );
 
   async function submit() {
     if (!note.trim()) {
@@ -250,24 +265,46 @@ export function HitlPanel({
 
         {/* 오른쪽 — 감사 이력 */}
         <div className="border-t border-line pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-          <h3 className="text-[12.5px] font-semibold text-muted">감사 이력 · {history.length}건</h3>
-          {history.length === 0 ? (
+          <h3 className="text-[12.5px] font-semibold text-muted">
+            감사 이력 · {auditHistory.length}건
+          </h3>
+          {auditHistory.length === 0 ? (
             <p className="mt-2 text-[12.5px] text-faint">아직 기록된 조치가 없습니다.</p>
           ) : (
             <ol className="mt-2 flex max-h-80 flex-col gap-3 overflow-y-auto pr-1">
-              {history.map((h) => (
-                <li key={h.id} className="text-[12.5px]">
+              {auditHistory.map(({ kind, record }) => {
+                const item =
+                  kind === "item"
+                    ? reviewItems.find(
+                        (candidate) =>
+                          candidate.verdict_id === record.verdict_id &&
+                          candidate.reason === record.review_reason,
+                      )
+                    : null;
+                return (
+                <li key={`${kind}:${record.id}`} className="text-[12.5px]">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full bg-bg px-2.5 py-0.5 font-semibold text-ink-strong">
-                      {h.action}
+                      {kind === "case" ? record.action : record.resolution}
                     </span>
-                    {h.previous_action && <span className="text-faint">← {h.previous_action}</span>}
-                    <span className="ml-auto text-faint">{formatDateTime(h.processed_at)}</span>
+                    {kind === "case" && record.previous_action && (
+                      <span className="text-faint">← {record.previous_action}</span>
+                    )}
+                    {kind === "item" && (
+                      <span className="text-faint">
+                        {item?.scope ?? "확인 사항"} ·{" "}
+                        {item?.reason_label ?? record.review_reason}
+                      </span>
+                    )}
+                    <span className="ml-auto text-faint">
+                      {formatDateTime(record.processed_at)}
+                    </span>
                   </div>
-                  <div className="mt-1 text-faint">{h.reviewer}</div>
-                  <div className="mt-0.5 text-ink">{h.note}</div>
+                  <div className="mt-1 text-faint">{record.reviewer}</div>
+                  <div className="mt-0.5 text-ink">{record.note}</div>
                 </li>
-              ))}
+                );
+              })}
             </ol>
           )}
         </div>
