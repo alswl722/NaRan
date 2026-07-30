@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -50,6 +50,19 @@ export function PdfViewer({
   const [renderedHeight, setRenderedHeight] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<HighlightBox | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const viewerRef = useRef<HTMLDivElement | null>(null);
+  const widthBeforeFullscreen = useRef(DEFAULT_WIDTH);
+
+  useEffect(() => {
+    function syncFullscreenState() {
+      const fullscreen = document.fullscreenElement === viewerRef.current;
+      setIsFullscreen(fullscreen);
+      if (!fullscreen) setWidth(widthBeforeFullscreen.current);
+    }
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreenState);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -80,8 +93,30 @@ export function PdfViewer({
     highlight.page_width &&
     highlight.page_height;
 
+  async function toggleFullscreen() {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    if (document.fullscreenElement === viewer) {
+      await document.exitFullscreen();
+      return;
+    }
+
+    widthBeforeFullscreen.current = width;
+    setWidth(Math.min(MAX_WIDTH, Math.max(DEFAULT_WIDTH, window.innerWidth - 64)));
+    try {
+      await viewer.requestFullscreen();
+    } catch {
+      setWidth(widthBeforeFullscreen.current);
+    }
+  }
+
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-bg">
+    <div
+      ref={viewerRef}
+      className={`overflow-hidden border border-line bg-bg ${
+        isFullscreen ? "h-screen rounded-none" : "rounded-xl"
+      }`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2">
         <span className="text-[12px] font-semibold text-ink-strong">
           {numPages ? `p.${currentPage} / ${numPages}` : "불러오는 중…"}
@@ -129,10 +164,22 @@ export function PdfViewer({
           >
             +
           </button>
+          <span className="mx-1 h-4 w-px bg-line" />
+          <button
+            type="button"
+            onClick={() => void toggleFullscreen()}
+            className="rounded-full bg-bg px-2.5 py-1 text-[11.5px] font-semibold text-muted hover:text-ink-strong"
+          >
+            {isFullscreen ? "전체화면 종료" : "전체화면"}
+          </button>
         </div>
       </div>
 
-      <div className="max-h-full overflow-auto p-4">
+      <div
+        className={`overflow-auto p-4 ${
+          isFullscreen ? "h-[calc(100vh-45px)]" : "max-h-full"
+        }`}
+      >
         {loadError ? (
           <p className="p-6 text-center text-[13px] text-status-unexplained">
             PDF를 불러오지 못했습니다: {loadError}
