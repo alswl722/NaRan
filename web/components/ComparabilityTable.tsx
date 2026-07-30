@@ -27,6 +27,9 @@ const FIELD_LABEL: Record<string, string> = {
 
 // 불일치·누락은 위험이 아니라 "눈여겨볼 지점"이라 브랜드색으로, 나머지는 중립으로 표시한다.
 const NEEDS_ATTENTION = new Set(["불일치", "누락"]);
+const HIDDEN_REASON_TEXT = new Set([
+  "양쪽 수치 존재 확인; 값의 차이는 대조 엔진에서 계산",
+]);
 
 function validPeriod(mapping: BoundaryMapping): string {
   if (
@@ -124,7 +127,9 @@ export function ComparabilityTable({
                   )}
                   {c.status}
                 </span>
-                {c.reason && <div className="mt-0.5 text-[11.5px] text-faint">{c.reason}</div>}
+                {c.reason && !HIDDEN_REASON_TEXT.has(c.reason) && (
+                  <div className="mt-0.5 text-[11.5px] text-faint">{c.reason}</div>
+                )}
               </td>
             </tr>
           ))}
