@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { ANALYZE_TIMEOUT_MS, apiGet, apiPost, ApiError } from "@/lib/api";
 import type {
   AnalyzeExecution,
@@ -38,6 +38,8 @@ export default function CaseDetailPage({
   const [lastExecution, setLastExecution] = useState<AnalyzeExecution | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const claimListRef = useRef<HTMLElement | null>(null);
+  const claimCardRefs = useRef(new Map<string, HTMLDivElement>());
 
   const loadAll = useCallback(async () => {
     const summary = await apiGet<CaseSummary>(`/cases/${caseId}`);
@@ -96,6 +98,27 @@ export default function CaseDetailPage({
     activeClaimId && claimDetails.some((d) => d.claim.id === activeClaimId)
       ? activeClaimId
       : (claimDetails[0]?.claim.id ?? null);
+
+  function selectClaimFromNavigator(claimId: string) {
+    setActiveClaimId(claimId);
+    window.requestAnimationFrame(() => {
+      const container = claimListRef.current;
+      const card = claimCardRefs.current.get(claimId);
+      if (!container || !card) return;
+
+      // 데스크톱에서는 우측 카드 목록만 스크롤하고, 목록 자체가 스크롤되지
+      // 않는 작은 화면에서는 페이지가 해당 카드로 이동하게 한다.
+      if (container.scrollHeight > container.clientHeight) {
+        const top =
+          container.scrollTop +
+          card.getBoundingClientRect().top -
+          container.getBoundingClientRect().top;
+        container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      } else {
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
 
   async function runAnalysis() {
     setAnalyzing(true);
@@ -293,19 +316,31 @@ export default function CaseDetailPage({
           pdfAvailable={pdfAvailable}
           claimDetails={claimDetails}
           activeClaimId={effectiveClaimId}
-          onSelectClaim={setActiveClaimId}
+          onSelectClaim={selectClaimFromNavigator}
         />
-        <section className="flex flex-col gap-4 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
+        <section
+          ref={claimListRef}
+          data-testid="claim-list"
+          className="flex flex-col gap-4 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto"
+        >
           {claimDetails.map((detail) => (
-            <ClaimCard
+            <div
               key={detail.claim.id}
-              detail={detail}
-              runs={runsWithTrace.filter(({ run }) =>
-                run.logical_key.includes(`-${detail.claim.id}-`),
-              )}
-              isActive={detail.claim.id === effectiveClaimId}
-              onSelect={() => setActiveClaimId(detail.claim.id)}
-            />
+              data-testid={`claim-card-${detail.claim.id}`}
+              ref={(element) => {
+                if (element) claimCardRefs.current.set(detail.claim.id, element);
+                else claimCardRefs.current.delete(detail.claim.id);
+              }}
+            >
+              <ClaimCard
+                detail={detail}
+                runs={runsWithTrace.filter(({ run }) =>
+                  run.logical_key.includes(`-${detail.claim.id}-`),
+                )}
+                isActive={detail.claim.id === effectiveClaimId}
+                onSelect={() => setActiveClaimId(detail.claim.id)}
+              />
+            </div>
           ))}
         </section>
       </div>
