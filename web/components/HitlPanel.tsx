@@ -179,20 +179,26 @@ export function HitlPanel({
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 왼쪽 — 조치 선택과 입력 */}
         <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
+          <div>
+            <div className="mb-1.5 text-[11px] font-semibold text-faint">조치 선택</div>
+            <div className="flex flex-wrap gap-1.5">
             {ACTIONS.map((a) => (
               <button
                 key={a}
                 type="button"
                 onClick={() => setAction(a)}
-                className={`rounded-xl px-3.5 py-2 text-left ${
-                  action === a ? "bg-brand" : "bg-bg hover:bg-brand-soft"
+                aria-pressed={action === a}
+                className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition-colors ${
+                  action === a
+                    ? "bg-brand text-ink-strong"
+                    : "border border-line bg-surface text-muted hover:border-brand"
                 }`}
               >
-                <div className="text-[13px] font-semibold text-ink-strong">{a}</div>
-                <div className="text-[11.5px] text-muted">{ACTION_INFO[a]}</div>
+                {a}
               </button>
             ))}
+            </div>
+            <p className="mt-1.5 text-[11.5px] text-muted">{ACTION_INFO[action]}</p>
           </div>
 
           {action === "추가 자료 요청" && followUpQuestion && (
