@@ -108,6 +108,13 @@ def _case_review_required(session: Session, case_id: str) -> bool | None:
 def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:
     company = session.get(Company, case.company_id)
     report = session.get(Report, case.report_id)
+    company_name = company.legal_name if company else None
+    report_title = report.title if report else None
+    # 기존 로컬 DB에 적재된 데모 명칭도 재초기화 없이 사용자용 이름으로 표시한다.
+    if company_name == "가상기업 C":
+        company_name = "가상 기업"
+    if report_title:
+        report_title = report_title.replace("가상기업 C", "가상 기업")
     latest_started_at = session.scalar(
         select(func.max(AnalysisRunRecord.started_at)).where(
             AnalysisRunRecord.monitoring_case_id == case.id
@@ -136,9 +143,9 @@ def _case_summary(session: Session, case: MonitoringCaseRecord) -> dict:
     return {
         "id": case.id,
         "company_id": case.company_id,
-        "company_name": company.legal_name if company else None,
+        "company_name": company_name,
         "report_id": case.report_id,
-        "report_title": report.title if report else None,
+        "report_title": report_title,
         "case_type": case.case_type,
         "next_review_date": case.next_review_date,
         "importance": case.importance,

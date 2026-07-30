@@ -1,14 +1,14 @@
 {
   "company": {
     "id": "company-synthetic-c",
-    "legal_name": "가상기업 C",
+    "legal_name": "가상 기업",
     "identifiers": {},
     "aliases": []
   },
   "report": {
     "id": "report-c-2024",
     "company_id": "company-synthetic-c",
-    "title": "가상기업 C 2024 환경성과 보고서",
+    "title": "가상 기업 2024 환경성과 보고서",
     "reporting_year": 2024,
     "file_hash": "synthetic-report-fixture",
     "source_url": "fixture://case-c-report"
