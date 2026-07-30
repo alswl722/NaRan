@@ -7,7 +7,6 @@ import { TraceTimeline } from "@/components/TraceTimeline";
 import {
   explanationLabel,
   extractionModeLabel,
-  matchTypeLabel,
   reviewReasonLabel,
 } from "@/lib/labels";
 import {
@@ -201,11 +200,6 @@ export function ClaimCard({
 
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={comp.verdict.status} />
-                {matchTypeLabel(comp.verdict.match_type) && (
-                  <span className="text-[12px] text-faint">
-                    {matchTypeLabel(comp.verdict.match_type)}
-                  </span>
-                )}
                 {comp.verdict.review_required && comp.verdict.review_reasons.length > 0 && (
                   <span className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-strong">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />

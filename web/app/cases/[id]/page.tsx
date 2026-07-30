@@ -16,6 +16,7 @@ import type {
 import { ClaimCard } from "@/components/ClaimCard";
 import { HitlPanel } from "@/components/HitlPanel";
 import { PdfPanel } from "@/components/PdfPanel";
+import { reviewReasonLabel } from "@/lib/labels";
 
 type RunWithTrace = { run: RunSummary; trace: TraceEvent[] };
 
@@ -171,6 +172,20 @@ export default function CaseDetailPage({
       : (claimDetails
           .flatMap((d) => d.comparisons.map((c) => c.verdict.follow_up_question))
           .find((q) => q !== null) ?? null);
+  const reviewItems = Array.from(
+    new Set(
+      claimDetails.flatMap((detail) =>
+        detail.comparisons.flatMap((comparison) =>
+          comparison.verdict.review_required
+            ? comparison.verdict.review_reasons.map(
+                (reason) =>
+                  `${detail.claim.scope ?? detail.claim.metric}: ${reviewReasonLabel(reason)}`,
+              )
+            : [],
+        ),
+      ),
+    ),
+  );
 
   return (
     <div className="w-full flex-1 px-8 py-8 lg:px-12">
@@ -352,6 +367,7 @@ export default function CaseDetailPage({
           history={reviewHistory}
           onHistoryChange={setReviewHistory}
           followUpQuestion={followUpQuestion}
+          reviewItems={reviewItems}
         />
       </section>
     </div>

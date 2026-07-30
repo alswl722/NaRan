@@ -19,11 +19,13 @@ export function HitlPanel({
   history,
   onHistoryChange,
   followUpQuestion,
+  reviewItems = [],
 }: {
   caseId: string;
   history: ReviewRecord[];
   onHistoryChange: (next: ReviewRecord[]) => void;
   followUpQuestion?: string | null;
+  reviewItems?: string[];
 }) {
   const [action, setAction] = useState<ReviewAction>("추가 자료 요청");
   const [note, setNote] = useState("");
@@ -83,6 +85,17 @@ export function HitlPanel({
           <span className="font-semibold text-ink-strong">아직 조치 없음</span>
         )}
       </div>
+
+      {reviewItems.length > 0 && (
+        <div className="mt-3 rounded-xl border border-brand/40 bg-brand-soft px-3.5 py-3">
+          <div className="text-[11px] font-semibold text-muted">이번 검토에서 확인할 사항</div>
+          <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[12.5px] text-ink-strong">
+            {reviewItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 왼쪽 — 조치 선택과 입력 */}
