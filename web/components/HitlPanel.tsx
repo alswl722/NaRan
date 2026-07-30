@@ -84,85 +84,91 @@ export function HitlPanel({
         )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5">
-          {ACTIONS.map((a) => (
-            <button
-              key={a}
-              type="button"
-              onClick={() => setAction(a)}
-              className={`rounded-xl px-3.5 py-2 text-left ${
-                action === a ? "bg-brand" : "bg-bg hover:bg-brand-soft"
-              }`}
-            >
-              <div className="text-[13px] font-semibold text-ink-strong">{a}</div>
-              <div className="text-[11.5px] text-muted">{ACTION_INFO[a]}</div>
-            </button>
-          ))}
-        </div>
-
-        {action === "추가 자료 요청" && followUpQuestion && (
-          <div className="rounded-xl bg-brand-soft px-3.5 py-3 text-[12.5px] text-ink-strong">
-            <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-muted">
-              <span>AI가 준비해둔 질문 초안</span>
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* 왼쪽 — 조치 선택과 입력 */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            {ACTIONS.map((a) => (
               <button
+                key={a}
                 type="button"
-                onClick={() => setNote(followUpQuestion)}
-                className="shrink-0 text-brand underline decoration-dotted underline-offset-2"
+                onClick={() => setAction(a)}
+                className={`rounded-xl px-3.5 py-2 text-left ${
+                  action === a ? "bg-brand" : "bg-bg hover:bg-brand-soft"
+                }`}
               >
-                메모에 채우기
+                <div className="text-[13px] font-semibold text-ink-strong">{a}</div>
+                <div className="text-[11.5px] text-muted">{ACTION_INFO[a]}</div>
               </button>
-            </div>
-            {followUpQuestion}
-          </div>
-        )}
-
-        <input
-          value={reviewer}
-          onChange={(e) => setReviewer(e.target.value)}
-          placeholder="검토자"
-          className="rounded-xl bg-bg px-3.5 py-2 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
-        />
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="메모"
-          rows={3}
-          className="resize-none rounded-xl bg-bg px-3.5 py-2 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
-        />
-
-        {error && <p className="text-[12.5px] text-status-unexplained">{error}</p>}
-
-        <button
-          type="button"
-          onClick={submit}
-          disabled={submitting}
-          className="self-start rounded-xl bg-brand px-4 py-2 text-[13.5px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {submitting ? "저장 중…" : "조치 저장"}
-        </button>
-      </div>
-
-      {history.length > 0 && (
-        <div className="mt-5 pt-4">
-          <h3 className="text-[12.5px] font-semibold text-muted">감사 이력 · {history.length}건</h3>
-          <ol className="mt-2 flex flex-col gap-3">
-            {history.map((h) => (
-              <li key={h.id} className="text-[12.5px]">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-full bg-bg px-2.5 py-0.5 font-semibold text-ink-strong">
-                    {h.action}
-                  </span>
-                  {h.previous_action && <span className="text-faint">← {h.previous_action}</span>}
-                  <span className="ml-auto text-faint">{formatDateTime(h.processed_at)}</span>
-                </div>
-                <div className="mt-1 text-faint">{h.reviewer}</div>
-                <div className="mt-0.5 text-ink">{h.note}</div>
-              </li>
             ))}
-          </ol>
+          </div>
+
+          {action === "추가 자료 요청" && followUpQuestion && (
+            <div className="rounded-xl bg-brand-soft px-3.5 py-3 text-[12.5px] text-ink-strong">
+              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-muted">
+                <span>AI가 준비해둔 질문 초안</span>
+                <button
+                  type="button"
+                  onClick={() => setNote(followUpQuestion)}
+                  className="shrink-0 text-brand underline decoration-dotted underline-offset-2"
+                >
+                  메모에 채우기
+                </button>
+              </div>
+              {followUpQuestion}
+            </div>
+          )}
+
+          <input
+            value={reviewer}
+            onChange={(e) => setReviewer(e.target.value)}
+            placeholder="검토자"
+            className="rounded-xl bg-bg px-3.5 py-2 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
+          />
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="메모"
+            rows={3}
+            className="resize-none rounded-xl bg-bg px-3.5 py-2 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
+          />
+
+          {error && <p className="text-[12.5px] text-status-unexplained">{error}</p>}
+
+          <button
+            type="button"
+            onClick={submit}
+            disabled={submitting}
+            className="self-start rounded-xl bg-brand px-4 py-2 text-[13.5px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "저장 중…" : "조치 저장"}
+          </button>
         </div>
-      )}
+
+        {/* 오른쪽 — 감사 이력 */}
+        <div className="border-t border-line pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+          <h3 className="text-[12.5px] font-semibold text-muted">감사 이력 · {history.length}건</h3>
+          {history.length === 0 ? (
+            <p className="mt-2 text-[12.5px] text-faint">아직 기록된 조치가 없습니다.</p>
+          ) : (
+            <ol className="mt-2 flex max-h-80 flex-col gap-3 overflow-y-auto pr-1">
+              {history.map((h) => (
+                <li key={h.id} className="text-[12.5px]">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-bg px-2.5 py-0.5 font-semibold text-ink-strong">
+                      {h.action}
+                    </span>
+                    {h.previous_action && <span className="text-faint">← {h.previous_action}</span>}
+                    <span className="ml-auto text-faint">{formatDateTime(h.processed_at)}</span>
+                  </div>
+                  <div className="mt-1 text-faint">{h.reviewer}</div>
+                  <div className="mt-0.5 text-ink">{h.note}</div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

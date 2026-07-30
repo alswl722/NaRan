@@ -50,3 +50,25 @@ export function formatDateOnly(iso: string): string {
 export function formatDateTime(iso: string): string {
   return `${iso.slice(0, 10).replaceAll("-", ".")} ${iso.slice(11, 16)}`;
 }
+
+/** PublicFact에는 원문 문장이 없어 필드를 조합해 보고서 원문과 나란히 놓을
+ * 수 있는 근거 문장을 합성한다 — "env-info 공개 데이터 · Scope 1 · 71,840
+ * tCO2eq (2024.01.01 ~ 2024.12.31)" 형태. */
+export function publicFactSentence(fact: {
+  raw_value: string | null;
+  unit: string | null;
+  scope: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  source_url: string;
+}): string {
+  const source = fact.source_url.includes("env-info.kr")
+    ? "환경정보공개시스템(env-info) 공개 데이터"
+    : fact.source_url.includes("gir.go.kr")
+      ? "온실가스종합정보센터(GIR) 공개 데이터"
+      : "공개 데이터";
+  const parts = [source, fact.scope, formatValueWithUnit(fact.raw_value, fact.unit)].filter(
+    Boolean,
+  );
+  return parts.join(" · ");
+}

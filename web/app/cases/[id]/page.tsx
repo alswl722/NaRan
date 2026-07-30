@@ -149,33 +149,30 @@ export default function CaseDetailPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        {/* 본문 — 주장 카드(장면 3·4) + 그 주장을 다룬 실행의 트레이스(장면 2) */}
-        <section className="flex flex-col gap-4">
-          {claimDetails.map((detail) => (
-            <ClaimCard
-              key={detail.claim.id}
-              detail={detail}
-              runs={runsWithTrace.filter(({ run }) =>
-                run.logical_key.includes(`-${detail.claim.id}-`),
-              )}
-            />
-          ))}
-        </section>
+      {/* 주장 카드(장면 3·4) + 그 주장을 다룬 실행의 트레이스(장면 2) —
+          나란히 대조 뷰가 넓은 폭을 쓰므로 전체 폭 1단으로 배치한다 */}
+      <section className="flex flex-col gap-4">
+        {claimDetails.map((detail) => (
+          <ClaimCard
+            key={detail.claim.id}
+            detail={detail}
+            runs={runsWithTrace.filter(({ run }) =>
+              run.logical_key.includes(`-${detail.claim.id}-`),
+            )}
+          />
+        ))}
+      </section>
 
-        {/* 사이드 — HITL */}
-        <div className="flex flex-col gap-6">
-          <section>
-            <h2 className="mb-3 text-[15px] font-bold text-ink-strong">HITL</h2>
-            <HitlPanel
-              caseId={caseId}
-              history={reviewHistory}
-              onHistoryChange={setReviewHistory}
-              followUpQuestion={followUpQuestion}
-            />
-          </section>
-        </div>
-      </div>
+      {/* HITL — claim 카드들 아래, 전체 폭으로 배치해 사이드바 좁은 폭 제약을 없앤다 */}
+      <section className="mt-6">
+        <h2 className="mb-3 text-[15px] font-bold text-ink-strong">HITL</h2>
+        <HitlPanel
+          caseId={caseId}
+          history={reviewHistory}
+          onHistoryChange={setReviewHistory}
+          followUpQuestion={followUpQuestion}
+        />
+      </section>
     </div>
   );
 }

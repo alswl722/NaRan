@@ -1,5 +1,6 @@
 import { StatusBadge } from "@/components/StatusBadge";
 import { ComparabilityTable } from "@/components/ComparabilityTable";
+import { HighlightedText } from "@/components/HighlightedText";
 import { TraceTimeline } from "@/components/TraceTimeline";
 import { extractionModeLabel, matchTypeLabel } from "@/lib/labels";
 import {
@@ -8,6 +9,7 @@ import {
   formatDateTime,
   formatDecimal,
   formatValueWithUnit,
+  publicFactSentence,
 } from "@/lib/format";
 import type { ClaimDetail, RunSummary, TraceEvent } from "@/lib/types";
 
@@ -77,10 +79,30 @@ export function ClaimCard({
       </div>
 
       <details className="mt-3 group">
-        <ToggleSummary>원문 보기</ToggleSummary>
-        <blockquote className="mt-2 rounded-xl bg-bg px-4 py-3 text-[13px] leading-relaxed text-ink">
-          “{claim.raw_text}”
-        </blockquote>
+        <ToggleSummary>원문 나란히 보기</ToggleSummary>
+        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-xl bg-bg px-4 py-3">
+            <div className="mb-1.5 text-[11px] font-semibold text-faint">
+              보고서 원문 · p.{claim.page}
+            </div>
+            <blockquote className="text-[13px] leading-relaxed text-ink">
+              “<HighlightedText text={claim.raw_text} values={[claim.value]} />”
+            </blockquote>
+          </div>
+          <div className="rounded-xl bg-bg px-4 py-3">
+            <div className="mb-1.5 text-[11px] font-semibold text-faint">공개 데이터 근거</div>
+            {comparisons.length > 0 && comparisons[0].public_fact ? (
+              <p className="text-[13px] leading-relaxed text-ink">
+                <HighlightedText
+                  text={publicFactSentence(comparisons[0].public_fact)}
+                  values={[comparisons[0].public_fact.raw_value]}
+                />
+              </p>
+            ) : (
+              <p className="text-[13px] text-faint">아직 대조된 공개 데이터가 없습니다.</p>
+            )}
+          </div>
+        </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-faint">
           <span>{claim.evidence}</span>
           <span>{extractionModeLabel(claim.extraction_mode)}</span>
