@@ -66,8 +66,8 @@ export default function DashboardPage() {
   if (error && !data) {
     return (
       <div className="w-full flex-1 px-8 py-8 lg:px-12">
-        <p className="text-[14px] text-status-unexplained">{error}</p>
-        <p className="mt-2 text-[13px] text-faint">
+        <p className="text-[15.5px] text-status-unexplained">{error}</p>
+        <p className="mt-2 text-[14.5px] text-faint">
           백엔드 서버(기본 http://localhost:8000)가 실행 중인지 확인해 주세요.
         </p>
       </div>
@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
   if (!data) {
     return (
-      <div className="w-full flex-1 px-8 py-8 text-[14px] text-faint lg:px-12">불러오는 중…</div>
+      <div className="w-full flex-1 px-8 py-8 text-[15.5px] text-faint lg:px-12">불러오는 중…</div>
     );
   }
 
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-ink-strong">여신 사후관리 현황</h1>
-          <p className="mt-1.5 text-[13px] text-faint">
+          <p className="mt-1.5 text-[14.5px] text-faint">
             비교 가능한 값만 대조한 실시간 집계입니다
           </p>
         </div>
@@ -131,13 +131,13 @@ export default function DashboardPage() {
             type="button"
             onClick={load}
             disabled={loading}
-            className="rounded-xl bg-surface px-4 py-2 text-[13px] font-semibold text-muted shadow-card hover:text-ink-strong disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl bg-surface px-4 py-2 text-[14.5px] font-semibold text-muted shadow-card hover:text-ink-strong disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "새로고침 중…" : "새로고침"}
           </button>
           <Link
             href="/cases"
-            className="rounded-xl bg-brand px-4 py-2 text-[13px] font-bold text-ink-strong shadow-card"
+            className="rounded-xl bg-brand px-4 py-2 text-[14.5px] font-bold text-ink-strong shadow-card"
           >
             대기열 전체 보기 →
           </Link>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
 
       {findings.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-[14.5px] font-bold text-ink-strong">최근 판단 근거</h2>
+          <h2 className="text-[16px] font-bold text-ink-strong">최근 판단 근거</h2>
           <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-3">
             {findings.map((f) => (
               <Link
@@ -172,13 +172,13 @@ export default function DashboardPage() {
                 className="flex flex-col gap-1.5 rounded-2xl bg-surface p-4 shadow-card"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[12.5px] font-bold text-ink-strong">{f.company}</span>
+                  <span className="text-[14px] font-bold text-ink-strong">{f.company}</span>
                   <StatusBadge status={f.status} />
                 </div>
-                <div className="text-[11.5px] text-faint">{f.metricLabel}</div>
-                <p className="text-[12.5px] leading-relaxed text-ink">{f.explanation}</p>
+                <div className="text-[13.5px] text-faint">{f.metricLabel}</div>
+                <p className="text-[14px] leading-relaxed text-ink">{f.explanation}</p>
                 {f.absoluteDifference !== null && (
-                  <p className="mt-1 text-[12px] tabular-nums text-ink-strong">
+                  <p className="mt-1 text-[13.5px] tabular-nums text-ink-strong">
                     수치 차이 {formatValueWithUnit(f.absoluteDifference, f.unit)}
                     {f.relativeDifferencePct !== null &&
                       ` · 상대 차이율 ${formatDecimal(f.relativeDifferencePct)}%`}
@@ -208,11 +208,11 @@ function StatTile({
     <div className="rounded-2xl bg-surface p-4 shadow-card">
       <div className="flex items-center gap-1.5">
         {accent && <span className="h-1.5 w-4 shrink-0 rounded-full bg-brand" />}
-        <span className="text-[12.5px] font-medium text-muted">{label}</span>
+        <span className="text-[14px] font-medium text-muted">{label}</span>
       </div>
       <div className="mt-1.5 flex items-baseline gap-1">
-        <span className="text-[26px] font-extrabold tabular-nums text-ink-strong">{value}</span>
-        {unit && <span className="text-[12px] font-medium text-faint">{unit}</span>}
+        <span className="text-[27.5px] font-extrabold tabular-nums text-ink-strong">{value}</span>
+        {unit && <span className="text-[13.5px] font-medium text-faint">{unit}</span>}
       </div>
     </div>
   );

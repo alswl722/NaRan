@@ -122,37 +122,37 @@ export function HitlPanel({
   }
 
   return (
-    <div className="rounded-2xl bg-surface p-5 shadow-card">
+    <div className="rounded-sm border border-line bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-[15px] font-bold text-ink-strong">담당자 검토 및 조치</h2>
-        <span className="rounded-full bg-bg px-2.5 py-1 text-[11px] font-semibold text-muted">
+        <h2 className="text-[16.5px] font-bold text-ink-strong">담당자 검토 및 조치</h2>
+        <span className="rounded-full bg-bg px-2.5 py-1 text-[13px] font-semibold text-muted">
           {compactStatus}
         </span>
       </div>
-      <p className="mt-1 text-[12.5px] text-faint">
+      <p className="mt-1 text-[14px] text-faint">
         AI 분석 결과는 여기서 바뀌지 않습니다. 담당자 조치는 별도로 이력에 남습니다.
       </p>
 
       {pendingReviewItems.length > 0 && (
-        <div className="mt-3 rounded-xl border border-brand/40 bg-brand-soft px-3.5 py-3">
-          <div className="text-[11px] font-semibold text-muted">이번 검토에서 확인할 사항</div>
+        <div className="mt-3 rounded-sm border border-brand/40 bg-brand-soft px-3.5 py-3">
+          <div className="text-[13px] font-semibold text-muted">이번 검토에서 확인할 사항</div>
           <div className="mt-2 divide-y divide-brand/20">
             {pendingReviewItems.map((item) => {
               const key = `${item.verdict_id}:${item.reason}`;
               const confirmed = item.resolution?.resolution === "확인 완료";
               return (
                 <div key={key} className="py-2.5 first:pt-0 last:pb-0">
-                  <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
+                  <div className="flex flex-wrap items-center gap-2 text-[14px]">
                     <span className="font-semibold text-ink-strong">{item.scope}</span>
                     <span className="text-ink">{item.reason_label}</span>
-                    <span className="ml-auto text-[11px] font-semibold text-muted">
+                    <span className="ml-auto text-[13px] font-semibold text-muted">
                       {confirmed
                         ? `확인 완료 · ${item.resolution?.reviewer}`
                         : item.resolution?.resolution ?? "확인 전"}
                     </span>
                   </div>
                   {confirmed ? (
-                    <p className="mt-1 text-[11.5px] text-muted">
+                    <p className="mt-1 text-[13.5px] text-muted">
                       {item.resolution?.note} ·{" "}
                       {item.resolution && formatDateTime(item.resolution.processed_at)}
                     </p>
@@ -167,13 +167,13 @@ export function HitlPanel({
                           }))
                         }
                         placeholder="확인 근거 또는 요청 내용"
-                        className="min-w-52 flex-1 rounded-lg bg-surface px-3 py-1.5 text-[12px] outline-none focus:ring-2 focus:ring-brand"
+                        className="min-w-52 flex-1 rounded-sm bg-surface px-3 py-1.5 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
                       />
                       <button
                         type="button"
                         onClick={() => submitReviewItem(item, "확인 완료")}
                         disabled={itemSubmitting === key}
-                        className="rounded-lg border border-line bg-surface px-3 py-1.5 text-[11.5px] font-semibold text-ink-strong disabled:opacity-50"
+                        className="rounded-sm border border-line bg-surface px-3 py-1.5 text-[13.5px] font-semibold text-ink-strong disabled:opacity-50"
                       >
                         확인 완료
                       </button>
@@ -181,7 +181,7 @@ export function HitlPanel({
                         type="button"
                         onClick={() => submitReviewItem(item, "추가 자료 요청")}
                         disabled={itemSubmitting === key}
-                        className="rounded-lg bg-brand px-3 py-1.5 text-[11.5px] font-semibold text-ink-strong disabled:opacity-50"
+                        className="rounded-sm bg-brand px-3 py-1.5 text-[13.5px] font-semibold text-ink-strong disabled:opacity-50"
                       >
                         추가 자료 요청
                       </button>
@@ -198,7 +198,7 @@ export function HitlPanel({
         {/* 왼쪽 — 조치 선택과 입력 */}
         <div className="flex flex-col gap-3">
           <div>
-            <div className="mb-1.5 text-[11px] font-semibold text-faint">조치 선택</div>
+            <div className="mb-1.5 text-[13px] font-semibold text-faint">조치 선택</div>
             <div className="flex flex-wrap gap-1.5">
             {ACTIONS.map((a) => (
               <button
@@ -206,7 +206,7 @@ export function HitlPanel({
                 type="button"
                 onClick={() => setAction(a)}
                 aria-pressed={action === a}
-                className={`rounded-full px-3.5 py-2 text-[12px] font-semibold transition-colors ${
+                className={`rounded-full px-3.5 py-2 text-[13.5px] font-semibold transition-colors ${
                   action === a
                     ? "bg-brand text-ink-strong"
                     : "border border-line bg-surface text-muted hover:border-brand"
@@ -216,12 +216,12 @@ export function HitlPanel({
               </button>
             ))}
             </div>
-            <p className="mt-1.5 text-[11.5px] text-muted">{ACTION_INFO[action]}</p>
+            <p className="mt-1.5 text-[13.5px] text-muted">{ACTION_INFO[action]}</p>
           </div>
 
           {action === "추가 자료 요청" && followUpQuestion && (
-            <div className="rounded-xl bg-brand-soft px-3.5 py-3 text-[12.5px] text-ink-strong">
-              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-muted">
+            <div className="rounded-sm bg-brand-soft px-3.5 py-3 text-[14px] text-ink-strong">
+              <div className="mb-1 flex items-center justify-between gap-2 text-[13px] font-semibold text-muted">
                 <span>AI가 준비해둔 질문 초안</span>
                 <button
                   type="button"
@@ -240,16 +240,16 @@ export function HitlPanel({
             onChange={(e) => setNote(e.target.value)}
             placeholder="메모"
             rows={3}
-            className="resize-none rounded-xl bg-bg px-3.5 py-2 text-[13.5px] outline-none focus:ring-2 focus:ring-brand"
+            className="resize-none rounded-sm bg-bg px-3.5 py-2 text-[15px] outline-none focus:ring-2 focus:ring-brand"
           />
 
-          {error && <p className="text-[12.5px] text-status-unexplained">{error}</p>}
+          {error && <p className="text-[14px] text-status-unexplained">{error}</p>}
 
           <button
             type="button"
             onClick={submit}
             disabled={submitting}
-            className="self-start rounded-xl bg-brand px-4 py-2 text-[13.5px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
+            className="self-start rounded-sm bg-brand px-4 py-2 text-[15px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "저장 중…" : "조치 저장"}
           </button>
@@ -257,11 +257,11 @@ export function HitlPanel({
 
         {/* 오른쪽 — 감사 이력 */}
         <div className="border-t border-line pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-          <h3 className="text-[12.5px] font-semibold text-muted">
+          <h3 className="text-[14px] font-semibold text-muted">
             감사 이력 · {auditHistory.length}건
           </h3>
           {auditHistory.length === 0 ? (
-            <p className="mt-2 text-[12.5px] text-faint">아직 기록된 조치가 없습니다.</p>
+            <p className="mt-2 text-[14px] text-faint">아직 기록된 조치가 없습니다.</p>
           ) : (
             <ol className="mt-2 flex max-h-80 flex-col gap-3 overflow-y-auto pr-1">
               {auditHistory.map(({ kind, record }) => {
@@ -274,7 +274,7 @@ export function HitlPanel({
                       )
                     : null;
                 return (
-                <li key={`${kind}:${record.id}`} className="text-[12.5px]">
+                <li key={`${kind}:${record.id}`} className="text-[14px]">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full bg-bg px-2.5 py-0.5 font-semibold text-ink-strong">
                       {kind === "case" ? record.action : record.resolution}
@@ -293,7 +293,7 @@ export function HitlPanel({
                     </span>
                   </div>
                   <div className="mt-1 flex items-center gap-1.5 text-faint">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-soft text-[9px] font-semibold text-ink-strong">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-soft text-[12px] font-semibold text-ink-strong">
                       {record.reviewer === CURRENT_USER.name
                         ? CURRENT_USER.initials
                         : record.reviewer.slice(0, 1)}

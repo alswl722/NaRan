@@ -23,11 +23,12 @@
   --color-ink: #605c58; /* KB Gray (R96 G88 B76) — 본문 텍스트 */
   --color-ink-strong: #54494a; /* KB Dark Gray (R84 G80 B69) — 헤더·강조 텍스트 */
 
-  /* 중립 — 화면 배경·구분선 */
+  /* 중립 — 화면 배경·구분선. muted/faint는 업무용 화면에서 잘 읽혀야 해서
+     기존 값보다 어둡게 조정했다(대비 부족 피드백 반영). */
   --color-bg: #f7f6f4;
   --color-surface: #ffffff;
-  --color-muted: #857f7a;
-  --color-faint: #a8a29b;
+  --color-muted: #5c5652;
+  --color-faint: #726c67;
   --color-line: #e7e3dd;
 
   /* Sub Color */

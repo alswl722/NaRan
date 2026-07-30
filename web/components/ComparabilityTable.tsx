@@ -54,13 +54,13 @@ export function ComparabilityTable({
         <div className="rounded-sm border border-line bg-surface p-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <div className="text-[12px] font-bold text-ink-strong">범위 정렬 근거</div>
-              <div className="mt-0.5 text-[12px] text-muted">
+              <div className="text-[13.5px] font-bold text-ink-strong">범위 정렬 근거</div>
+              <div className="mt-0.5 text-[13.5px] text-muted">
                 공개 데이터 대상: {boundaryMapping.source_entity_name}
               </div>
             </div>
             <span
-              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+              className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${
                 boundaryMapping.alignment_permitted
                   ? "bg-brand-soft text-ink-strong"
                   : "bg-bg text-muted"
@@ -71,12 +71,12 @@ export function ComparabilityTable({
                 : "직접 비교하지 않음"}
             </span>
           </div>
-          <ul className="mt-3 list-disc space-y-1 pl-4 text-[12.5px] leading-relaxed text-ink">
+          <ul className="mt-3 list-disc space-y-1 pl-4 text-[14px] leading-relaxed text-ink">
             {boundaryMapping.evidence.map((evidence) => (
               <li key={evidence}>{evidence}</li>
             ))}
           </ul>
-          <div className="mt-3 border-t border-line pt-3 text-[12px] text-muted">
+          <div className="mt-3 border-t border-line pt-3 text-[13.5px] text-muted">
             <p>{boundaryMapping.note}</p>
             <p className="mt-1 font-semibold text-ink-strong">
               적용 기간: {validPeriod(boundaryMapping)}
@@ -85,9 +85,9 @@ export function ComparabilityTable({
         </div>
       )}
       <div className="overflow-x-auto rounded-xl bg-bg">
-        <table className="w-full min-w-[760px] text-left text-[13px]">
+        <table className="w-full min-w-[760px] text-left text-[14.5px]">
         <thead>
-          <tr className="text-[12px] text-faint">
+          <tr className="text-[13.5px] text-faint">
             <th className="w-[150px] min-w-[150px] px-3 py-2 font-medium whitespace-nowrap">
               조건
             </th>
@@ -118,7 +118,7 @@ export function ComparabilityTable({
               </td>
               <td className="px-3 py-2">
                 <span
-                  className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold ${
+                  className={`inline-flex items-center gap-1.5 text-[13.5px] font-semibold ${
                     NEEDS_ATTENTION.has(c.status) ? "text-ink-strong" : "text-faint"
                   }`}
                 >
@@ -128,7 +128,7 @@ export function ComparabilityTable({
                   {c.status}
                 </span>
                 {c.reason && !HIDDEN_REASON_TEXT.has(c.reason) && (
-                  <div className="mt-0.5 text-[11.5px] text-faint">{c.reason}</div>
+                  <div className="mt-0.5 text-[13.5px] text-faint">{c.reason}</div>
                 )}
               </td>
             </tr>

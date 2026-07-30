@@ -40,8 +40,8 @@ function ScopeFields({ fields }: { fields: ScopeField[] }) {
             f.label === "기간" ? "min-w-[165px] flex-[1.6]" : "min-w-[80px] flex-1"
           }`}
         >
-          <div className="text-[10.5px] font-semibold text-faint">{f.label}</div>
-          <div className="mt-0.5 whitespace-nowrap text-[11.5px] font-medium text-ink-strong">
+          <div className="text-[12.5px] font-semibold text-faint">{f.label}</div>
+          <div className="mt-0.5 whitespace-nowrap text-[13.5px] font-medium text-ink-strong">
             {f.value}
           </div>
         </div>
@@ -54,7 +54,7 @@ function ScopeFields({ fields }: { fields: ScopeField[] }) {
  * 다른 블록의 경계를 여백만으로는 구분하기 어려워 소제목을 둔다. */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 text-[11px] font-bold tracking-wide text-muted uppercase">
+    <div className="mb-2 text-[13px] font-bold tracking-wide text-muted uppercase">
       {children}
     </div>
   );
@@ -64,7 +64,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * 뚜렷하게 드러낸다. 기존엔 11.5px 옅은 회색 텍스트뿐이라 눈에 잘 안 띄었다. */
 function ToggleSummary({ children }: { children: React.ReactNode }) {
   return (
-    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-sm bg-bg px-3 py-1.5 text-[12.5px] font-semibold text-muted select-none hover:bg-brand-soft hover:text-ink-strong">
+    <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-sm bg-bg px-3 py-1.5 text-[14px] font-semibold text-muted select-none hover:bg-brand-soft hover:text-ink-strong">
       <svg
         className="h-3 w-3 shrink-0 transition-transform group-open:rotate-90"
         viewBox="0 0 24 24"
@@ -169,10 +169,10 @@ export function ClaimCard({
       {/* 원문·페이지·메타데이터 — 장면 3 */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[13.5px] font-semibold text-ink-strong">{claim.metric}</div>
+          <div className="text-[15px] font-semibold text-ink-strong">{claim.metric}</div>
         </div>
         <div className="shrink-0 text-right">
-          <div className="text-[19px] font-bold tabular-nums text-ink-strong">
+          <div className="text-[20.5px] font-bold tabular-nums text-ink-strong">
             {formatValueWithUnit(claim.value, claim.unit)}
           </div>
         </div>
@@ -202,15 +202,15 @@ export function ClaimCard({
       </div>
       <div className="rounded-sm border border-line">
         <div className="px-4 py-3">
-          <div className="text-[11px] font-semibold text-faint">보고서 원문</div>
-          <blockquote className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink">
+          <div className="text-[13px] font-semibold text-faint">보고서 원문</div>
+          <blockquote className="mt-1 line-clamp-2 text-[14.5px] leading-relaxed text-ink">
             “<HighlightedText text={claim.raw_text} values={[claim.value]} />”
           </blockquote>
         </div>
         {comparisons.length > 0 && comparisons[0].public_fact && (
           <div className="border-t border-line px-4 py-3">
-            <div className="text-[11px] font-semibold text-faint">공개 데이터 근거</div>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink">
+            <div className="text-[13px] font-semibold text-faint">공개 데이터 근거</div>
+            <p className="mt-1 text-[14.5px] leading-relaxed text-ink">
               <HighlightedText
                 text={publicFactSentence(comparisons[0].public_fact)}
                 values={[comparisons[0].public_fact.raw_value]}
@@ -220,14 +220,14 @@ export function ClaimCard({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-bg/60 px-4 py-3">
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold text-faint">근거 위치</div>
-            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[12.5px] leading-relaxed text-muted">
+            <div className="text-[13px] font-semibold text-faint">근거 위치</div>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[14px] leading-relaxed text-muted">
               {evidenceLocations.map((location) => (
                 <li key={location}>{location}</li>
               ))}
             </ul>
           </div>
-          <span className="shrink-0 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-muted">
+          <span className="shrink-0 rounded-full border border-line bg-surface px-2.5 py-1 text-[13px] font-semibold text-muted">
             {extractionModeLabel(claim.extraction_mode)}
           </span>
         </div>
@@ -237,7 +237,7 @@ export function ClaimCard({
       {!analyzed ? (
         <div className="mt-4">
           <SectionLabel>대조 결과</SectionLabel>
-          <p className="text-[13px] text-faint">아직 분석을 실행하지 않았습니다.</p>
+          <p className="text-[14.5px] text-faint">아직 분석을 실행하지 않았습니다.</p>
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-5">
@@ -258,13 +258,13 @@ export function ClaimCard({
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={comp.verdict.status} />
                 {pendingReasons.length > 0 && (
-                  <span className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-strong">
+                  <span className="ml-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-ink-strong">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                     검토 필요
                   </span>
                 )}
                 {humanConfirmed && (
-                  <span className="ml-auto text-[12px] font-semibold text-muted">
+                  <span className="ml-auto text-[13.5px] font-semibold text-muted">
                     담당자 확인 완료
                   </span>
                 )}
@@ -273,14 +273,14 @@ export function ClaimCard({
               {/* 보고서 값과 공개 데이터 값을 같은 자리에 놓고 본다 */}
               <div className="mt-3 grid grid-cols-2 border border-line">
                 <div className="border-r border-line px-3 py-2.5 text-center">
-                  <div className="text-[11px] text-faint">보고서</div>
-                  <div className="mt-0.5 text-[16px] font-bold tabular-nums text-ink-strong">
+                  <div className="text-[13px] text-faint">보고서</div>
+                  <div className="mt-0.5 text-[17.5px] font-bold tabular-nums text-ink-strong">
                     {formatValueWithUnit(comp.verdict.claim_raw_value, claim.unit)}
                   </div>
                 </div>
                 <div className="px-3 py-2.5 text-center">
-                  <div className="text-[11px] text-faint">공개 데이터</div>
-                  <div className="mt-0.5 text-[16px] font-bold tabular-nums text-ink-strong">
+                  <div className="text-[13px] text-faint">공개 데이터</div>
+                  <div className="mt-0.5 text-[17.5px] font-bold tabular-nums text-ink-strong">
                     {comp.public_fact
                       ? formatValueWithUnit(comp.verdict.public_raw_value, comp.public_fact.unit)
                       : "—"}
@@ -289,13 +289,13 @@ export function ClaimCard({
               </div>
 
               {showExplanation && (
-                <p className="mt-3 text-[13px] leading-relaxed text-ink">
+                <p className="mt-3 text-[14.5px] leading-relaxed text-ink">
                   {explanationLabel(comp.verdict.explanation)}
                 </p>
               )}
 
               {comp.verdict.absolute_difference !== null && (
-                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13.5px] tabular-nums text-ink-strong">
+                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[15px] tabular-nums text-ink-strong">
                   <span>
                     수치 차이{" "}
                     <strong>{formatValueWithUnit(comp.verdict.absolute_difference, claim.unit)}</strong>
@@ -311,10 +311,10 @@ export function ClaimCard({
 
               {comp.verdict.review_required && comp.verdict.review_reasons.length > 0 && (
                 <div className="mt-3 rounded-sm border border-brand/40 bg-brand-soft px-3 py-2.5">
-                  <div className="text-[11px] font-semibold text-muted">
+                  <div className="text-[13px] font-semibold text-muted">
                     {humanConfirmed ? "담당자 확인 완료" : "담당자 확인 사항"}
                   </div>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[12.5px] text-ink">
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[14px] text-ink">
                     {comp.verdict.review_reasons.map((reason) => (
                       <li key={reason}>
                         {reviewReasonLabel(reason)}
@@ -332,8 +332,8 @@ export function ClaimCard({
               {comp.public_fact && (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-line bg-bg/60 px-3 py-2.5">
                   <div>
-                    <div className="text-[11px] font-semibold text-faint">공개 데이터 출처</div>
-                    <div className="mt-0.5 text-[12px] text-muted">
+                    <div className="text-[13px] font-semibold text-faint">공개 데이터 출처</div>
+                    <div className="mt-0.5 text-[13.5px] text-muted">
                       데이터 조회일 {formatDateOnly(comp.public_fact.retrieved_at)}
                     </div>
                   </div>
@@ -341,7 +341,7 @@ export function ClaimCard({
                     href={comp.public_fact.source_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-[11.5px] font-semibold text-ink-strong hover:border-brand"
+                    className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-[13.5px] font-semibold text-ink-strong hover:border-brand"
                   >
                     원문 열기
                   </a>

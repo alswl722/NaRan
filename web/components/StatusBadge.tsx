@@ -1,20 +1,16 @@
-import { STATUS_LABEL } from "@/lib/status";
+import { STATUS_COLOR_VAR, STATUS_LABEL } from "@/lib/status";
 import type { AnalysisStatus } from "@/lib/types";
 
-// 기본 검토 라우팅상 담당자 확인이 필요한 상태(claude.md 7절)만 브랜드 점으로 표시하고,
-// 색으로 위험도를 매기지 않는다 — 구분은 텍스트 라벨이 한다.
-const NEEDS_ATTENTION: Set<AnalysisStatus> = new Set([
-  "설명 가능성 있음",
-  "설명되지 않은 차이",
-  "비교 불가",
-  "정보 부족",
-]);
-
+// 여섯 상태를 한눈에 구분할 수 있도록 상태색을 쓴다 — 배경은 옅은 틴트,
+// 글씨·점은 진한 상태색. "비교 불가"는 위험이 아니라 중립(회색) 상태다.
 export function StatusBadge({ status }: { status: AnalysisStatus }) {
-  const attention = NEEDS_ATTENTION.has(status);
+  const color = STATUS_COLOR_VAR[status];
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-bg px-3 py-1 text-[13px] font-semibold text-ink-strong">
-      <span className={`h-1.5 w-1.5 rounded-full ${attention ? "bg-brand" : "bg-faint"}`} />
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[14.5px] font-semibold"
+      style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, white)`, color }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
       {STATUS_LABEL[status]}
     </span>
   );

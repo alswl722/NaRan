@@ -118,7 +118,7 @@ export function PdfViewer({
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2">
-        <span className="text-[12px] font-semibold text-ink-strong">
+        <span className="text-[13.5px] font-semibold text-ink-strong">
           {numPages ? `p.${currentPage} / ${numPages}` : "불러오는 중…"}
         </span>
         <div className="flex items-center gap-1.5">
@@ -128,7 +128,7 @@ export function PdfViewer({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="rounded-full bg-bg px-2.5 py-1 text-[12px] font-semibold text-muted disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-bg px-2.5 py-1 text-[13.5px] font-semibold text-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
                 이전
               </button>
@@ -136,7 +136,7 @@ export function PdfViewer({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
                 disabled={currentPage >= numPages}
-                className="rounded-full bg-bg px-2.5 py-1 text-[12px] font-semibold text-muted disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-bg px-2.5 py-1 text-[13.5px] font-semibold text-muted disabled:cursor-not-allowed disabled:opacity-40"
               >
                 다음
               </button>
@@ -148,11 +148,11 @@ export function PdfViewer({
             onClick={() => setWidth((w) => Math.max(MIN_WIDTH, w - WIDTH_STEP))}
             disabled={width <= MIN_WIDTH}
             aria-label="축소"
-            className="grid h-6 w-6 place-items-center rounded-full bg-bg text-[14px] font-bold text-muted disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-6 w-6 place-items-center rounded-full bg-bg text-[15.5px] font-bold text-muted disabled:cursor-not-allowed disabled:opacity-40"
           >
             −
           </button>
-          <span className="w-10 text-center text-[11px] tabular-nums text-faint">
+          <span className="w-10 text-center text-[13px] tabular-nums text-faint">
             {Math.round((width / DEFAULT_WIDTH) * 100)}%
           </span>
           <button
@@ -160,7 +160,7 @@ export function PdfViewer({
             onClick={() => setWidth((w) => Math.min(MAX_WIDTH, w + WIDTH_STEP))}
             disabled={width >= MAX_WIDTH}
             aria-label="확대"
-            className="grid h-6 w-6 place-items-center rounded-full bg-bg text-[14px] font-bold text-muted disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-6 w-6 place-items-center rounded-full bg-bg text-[15.5px] font-bold text-muted disabled:cursor-not-allowed disabled:opacity-40"
           >
             +
           </button>
@@ -168,7 +168,7 @@ export function PdfViewer({
           <button
             type="button"
             onClick={() => void toggleFullscreen()}
-            className="rounded-full bg-bg px-2.5 py-1 text-[11.5px] font-semibold text-muted hover:text-ink-strong"
+            className="rounded-full bg-bg px-2.5 py-1 text-[13.5px] font-semibold text-muted hover:text-ink-strong"
           >
             {isFullscreen ? "전체화면 종료" : "전체화면"}
           </button>
@@ -181,7 +181,7 @@ export function PdfViewer({
         }`}
       >
         {loadError ? (
-          <p className="p-6 text-center text-[13px] text-status-unexplained">
+          <p className="p-6 text-center text-[14.5px] text-status-unexplained">
             PDF를 불러오지 못했습니다: {loadError}
           </p>
         ) : (
@@ -191,7 +191,7 @@ export function PdfViewer({
                 file={`${BASE_URL}/reports/${reportId}/pdf`}
                 onLoadSuccess={({ numPages }) => setNumPages(numPages)}
                 onLoadError={(err) => setLoadError(err.message)}
-                loading={<p className="p-6 text-[13px] text-faint">PDF 불러오는 중…</p>}
+                loading={<p className="p-6 text-[14.5px] text-faint">PDF 불러오는 중…</p>}
               >
                 <Page
                   pageNumber={currentPage}

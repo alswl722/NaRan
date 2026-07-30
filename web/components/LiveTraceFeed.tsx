@@ -94,10 +94,10 @@ export function LiveTraceFeed() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
           </span>
-          <span className="text-[11.5px] font-bold tracking-wide text-ink-strong">
+          <span className="text-[13.5px] font-bold tracking-wide text-ink-strong">
             실제 분석 과정
           </span>
-          <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-semibold text-ink-strong">
+          <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[12.5px] font-semibold text-ink-strong">
             사례 B · 삼성전자
           </span>
         </div>
@@ -125,7 +125,7 @@ export function LiveTraceFeed() {
             <li key={`${cycle}-${i}`} className="step-enter relative flex gap-3 pb-4 last:pb-0">
               {!last && <span className="absolute left-[7px] top-4 h-full w-px bg-line" />}
               <span
-                className={`relative z-10 mt-0.5 grid h-[15px] w-[15px] shrink-0 place-items-center rounded-full text-[8px] text-white ${
+                className={`relative z-10 mt-0.5 grid h-[15px] w-[15px] shrink-0 place-items-center rounded-full text-[11px] text-white ${
                   isStop ? "bg-status-not-comparable" : STEP_DOT[row.type]
                 }`}
               >
@@ -133,17 +133,17 @@ export function LiveTraceFeed() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10.5px] font-bold text-ink-strong">{row.type}</span>
+                  <span className="text-[12.5px] font-bold text-ink-strong">{row.type}</span>
                   {row.tool && (
-                    <span className="rounded bg-bg px-1.5 py-0.5 font-mono text-[9.5px] text-muted">
+                    <span className="rounded bg-bg px-1.5 py-0.5 font-mono text-[12.5px] text-muted">
                       {row.tool}
                     </span>
                   )}
-                  <span className="ml-auto font-mono text-[10px] text-faint">
+                  <span className="ml-auto font-mono text-[12.5px] text-faint">
                     {fmtClock(i, cycle)}
                   </span>
                 </div>
-                <p className={`mt-1 text-[12.5px] leading-snug ${isStop ? "font-semibold text-status-not-comparable" : "text-ink"}`}>
+                <p className={`mt-1 text-[14px] leading-snug ${isStop ? "font-semibold text-status-not-comparable" : "text-ink"}`}>
                   {row.message}
                 </p>
               </div>
@@ -151,7 +151,7 @@ export function LiveTraceFeed() {
           );
         })}
         {count < SCRIPT.length && (
-          <li className="flex items-center gap-2 pl-6 text-[11px] text-faint">
+          <li className="flex items-center gap-2 pl-6 text-[13px] text-faint">
             <span className="flex gap-1">
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-faint [animation-delay:-0.3s]" />
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-faint [animation-delay:-0.15s]" />

@@ -32,7 +32,7 @@ export default function Home() {
         <div className="mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
           <div className="text-center lg:text-left">
             <span
-              className="hero-enter inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11.5px] font-bold tracking-wide text-ink-strong"
+              className="hero-enter inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[13.5px] font-bold tracking-wide text-ink-strong"
               style={{ animationDelay: "0ms" }}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
@@ -40,7 +40,7 @@ export default function Home() {
             </span>
 
             <h1
-              className="hero-enter mt-5 text-[34px] font-extrabold leading-[1.22] tracking-[-0.02em] text-ink-strong lg:text-[42px]"
+              className="hero-enter mt-5 text-[35.5px] font-extrabold leading-[1.22] tracking-[-0.02em] text-ink-strong lg:text-[43.5px]"
               style={{ animationDelay: "90ms" }}
             >
               잘못된 비교부터
@@ -49,7 +49,7 @@ export default function Home() {
             </h1>
 
             <p
-              className="hero-enter mt-5 text-[15px] leading-relaxed text-muted lg:max-w-md"
+              className="hero-enter mt-5 text-[16.5px] leading-relaxed text-muted lg:max-w-md"
               style={{ animationDelay: "140ms" }}
             >
               나란은 지속가능경영보고서와 공개 환경 데이터를 비교 대조하여
@@ -62,7 +62,7 @@ export default function Home() {
             >
               <Link
                 href="/cases"
-                className="rounded-2xl bg-brand px-8 py-4 text-[15.5px] font-bold text-ink-strong shadow-float transition-transform hover:-translate-y-0.5"
+                className="rounded-2xl bg-brand px-8 py-4 text-[17px] font-bold text-ink-strong shadow-float transition-transform hover:-translate-y-0.5"
               >
                 대기열 확인하기 →
               </Link>
@@ -84,12 +84,12 @@ export default function Home() {
           className="hero-enter mx-auto max-w-xl text-center"
           style={{ animationDelay: "320ms" }}
         >
-          <h2 className="text-[26px] font-extrabold leading-snug text-ink-strong lg:text-[30px]">
+          <h2 className="text-[27.5px] font-extrabold leading-snug text-ink-strong lg:text-[31.5px]">
             만나보세요!
             <br />
             <span className="text-brand">나란</span>과 함께하는 여신 사후관리
           </h2>
-          <p className="mt-4 text-[14.5px] leading-relaxed text-muted">
+          <p className="mt-4 text-[16px] leading-relaxed text-muted">
             범위가 다른 숫자를 잘못 비교해 틀린 결론을 내지 않도록.
             <br />
             비교 가능한 값만 대조해 근거와 함께 보여드립니다.
@@ -106,11 +106,11 @@ export default function Home() {
               <div className="group relative rounded-xl border border-line bg-surface p-4 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-float">
                 <div className="flex items-center gap-2">
                   <span className="h-1.5 w-4 shrink-0 rounded-full bg-brand" />
-                  <div className="text-[16px] font-bold text-ink-strong">
+                  <div className="text-[17.5px] font-bold text-ink-strong">
                     {s.t}
                   </div>
                 </div>
-                <div className="mt-2 break-keep pl-6 text-[14px] leading-relaxed text-muted">
+                <div className="mt-2 break-keep pl-6 text-[15.5px] leading-relaxed text-muted">
                   {s.preview}
                 </div>
               </div>
@@ -124,7 +124,7 @@ export default function Home() {
         >
           <Link
             href="/cases"
-            className="group inline-flex items-center gap-2 rounded-full bg-ink-strong px-7 py-3.5 text-[14.5px] font-bold text-surface shadow-card transition-transform hover:-translate-y-0.5"
+            className="group inline-flex items-center gap-2 rounded-full bg-ink-strong px-7 py-3.5 text-[16px] font-bold text-surface shadow-card transition-transform hover:-translate-y-0.5"
           >
             여신 사후관리 대기열 바로 확인하기
             <span className="text-brand transition-transform group-hover:translate-x-0.5">

@@ -154,8 +154,8 @@ export default function CaseDetailPage({
   if (loadError && !caseSummary) {
     return (
       <div className="w-full px-8 py-8 lg:px-12">
-        <p className="text-[14px] text-status-unexplained">{loadError}</p>
-        <Link href="/cases" className="mt-4 inline-block text-[13px] text-brand underline">
+        <p className="text-[15.5px] text-status-unexplained">{loadError}</p>
+        <Link href="/cases" className="mt-4 inline-block text-[14.5px] text-brand underline">
           대기열로 돌아가기
         </Link>
       </div>
@@ -164,7 +164,7 @@ export default function CaseDetailPage({
 
   if (!caseSummary) {
     return (
-      <div className="w-full px-8 py-8 text-[14px] text-faint lg:px-12">불러오는 중…</div>
+      <div className="w-full px-8 py-8 text-[15.5px] text-faint lg:px-12">불러오는 중…</div>
     );
   }
 
@@ -204,7 +204,7 @@ export default function CaseDetailPage({
 
   return (
     <div className="w-full flex-1 px-8 py-8 lg:px-12">
-      <Link href="/cases" className="text-[13px] text-faint hover:text-ink">
+      <Link href="/cases" className="text-[14.5px] text-faint hover:text-ink">
         ← 대기열로
       </Link>
 
@@ -214,24 +214,24 @@ export default function CaseDetailPage({
             {caseSummary.company_name ?? caseSummary.company_id}
           </h1>
           {caseSummary.monitoring_data_synthetic && (
-            <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[11.5px] font-medium text-muted">
+            <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[13.5px] font-medium text-muted">
               {caseSummary.evidence_data_synthetic
                 ? "완전 합성 사례"
                 : "실제 공개자료 · 여신정보 데모"}
             </span>
           )}
         </div>
-        <p className="mt-1 text-[14px] text-muted">
+        <p className="mt-1 text-[15.5px] text-muted">
           {caseSummary.report_title} · {caseSummary.case_type}
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="flex rounded-xl border border-line bg-white p-1">
+          <div className="flex rounded-sm border border-line bg-white p-1">
             <button
               type="button"
               onClick={() => setAnalysisMode("demo")}
               disabled={analyzing}
-              className={`rounded-lg px-3 py-1.5 text-[12.5px] font-semibold ${
+              className={`rounded-sm px-3 py-1.5 text-[14px] font-semibold ${
                 analysisMode === "demo" ? "bg-ink-strong text-white" : "text-muted"
               }`}
             >
@@ -241,7 +241,7 @@ export default function CaseDetailPage({
               type="button"
               onClick={() => setAnalysisMode("live")}
               disabled={analyzing}
-              className={`rounded-lg px-3 py-1.5 text-[12.5px] font-semibold ${
+              className={`rounded-sm px-3 py-1.5 text-[14px] font-semibold ${
                 analysisMode === "live" ? "bg-brand text-ink-strong" : "text-muted"
               }`}
             >
@@ -252,7 +252,7 @@ export default function CaseDetailPage({
             type="button"
             onClick={runAnalysis}
             disabled={analyzing}
-            className="rounded-xl bg-brand px-5 py-2.5 text-[14px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-brand px-5 py-2.5 text-[15.5px] font-semibold text-ink-strong shadow-card disabled:cursor-not-allowed disabled:opacity-60"
           >
             {analyzing
               ? analysisMode === "live"
@@ -264,7 +264,7 @@ export default function CaseDetailPage({
           </button>
         </div>
         {analysisMode === "live" && (
-          <label className="mt-2 flex items-center gap-2 text-[12.5px] text-muted">
+          <label className="mt-2 flex items-center gap-2 text-[14px] text-muted">
             <input
               type="checkbox"
               checked={allowCacheFallback}
@@ -277,7 +277,7 @@ export default function CaseDetailPage({
         )}
         {lastExecution && (
           <div
-            className={`mt-3 rounded-xl border px-4 py-3 text-[12.5px] ${
+            className={`mt-3 rounded-sm border px-4 py-3 text-[14px] ${
               lastExecution.execution_mode === "live"
                 ? "border-emerald-300 bg-emerald-50 text-emerald-900"
                 : lastExecution.execution_mode === "fallback"
@@ -314,10 +314,10 @@ export default function CaseDetailPage({
           </div>
         )}
         {analysisError && (
-          <p className="mt-2 text-[13px] text-status-unexplained">{analysisError}</p>
+          <p className="mt-2 text-[14.5px] text-status-unexplained">{analysisError}</p>
         )}
         {loadError && (
-          <p className="mt-2 text-[13px] text-status-unexplained">
+          <p className="mt-2 text-[14.5px] text-status-unexplained">
             최신 사례 정보를 새로고침하지 못했습니다. 현재 표시된 결과는 이전 조회 내용입니다.
           </p>
         )}
@@ -325,11 +325,11 @@ export default function CaseDetailPage({
 
       {/* 장면 2 — 비교 불가 사례는 계산 중단 사실을 가장 먼저 강조한다 */}
       {notComparableClaims.length > 0 && (
-        <div className="mb-6 flex items-start gap-2.5 rounded-2xl bg-brand-soft p-5">
+        <div className="mb-6 flex items-start gap-2.5 rounded-sm bg-brand-soft p-5">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
           <div>
-            <h2 className="text-[14px] font-bold text-ink-strong">계산이 중단되었습니다</h2>
-            <p className="mt-1 text-[13px] text-ink">
+            <h2 className="text-[15.5px] font-bold text-ink-strong">계산이 중단되었습니다</h2>
+            <p className="mt-1 text-[14.5px] text-ink">
               보고서 값과 공개 데이터의 조직·지역 범위가 달라 차이를 계산하지 않았습니다. 동일한
               범위의 자료를 요청해 주세요.
             </p>

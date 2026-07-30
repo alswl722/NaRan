@@ -32,14 +32,14 @@ export function PdfPanel({
   const activeComparison = activeDetail?.comparisons[0] ?? null;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl bg-surface shadow-card lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)]">
+    <div className="flex flex-col overflow-hidden rounded-sm border border-line bg-surface shadow-card lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
         <div className="min-w-0">
           {activeDetail ? (
-            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+            <div className="flex flex-wrap items-center gap-1.5 text-[14.5px]">
               <span className="font-semibold text-ink-strong">{activeDetail.claim.metric}</span>
               {activeDetail.claim.scope && (
-                <span className="rounded-full bg-bg px-2.5 py-1 text-[12px] font-semibold text-ink-strong">
+                <span className="rounded-full bg-bg px-2.5 py-1 text-[13.5px] font-semibold text-ink-strong">
                   {activeDetail.claim.scope}
                 </span>
               )}
@@ -48,7 +48,7 @@ export function PdfPanel({
               )}
             </div>
           ) : (
-            <span className="text-[13px] text-faint">표시할 주장이 없습니다</span>
+            <span className="text-[14.5px] text-faint">표시할 주장이 없습니다</span>
           )}
         </div>
         {claimDetails.length > 0 && (
@@ -65,7 +65,7 @@ export function PdfPanel({
                   type="button"
                   onClick={() => onSelectClaim(detail.claim.id)}
                   aria-pressed={isActive}
-                  className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-semibold transition-colors ${
                     isActive
                       ? "bg-surface text-ink-strong shadow-sm"
                       : "text-faint hover:text-ink-strong"
@@ -81,7 +81,7 @@ export function PdfPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {!activeDetail ? (
-          <p className="p-6 text-center text-[13px] text-faint">표시할 주장이 없습니다.</p>
+          <p className="p-6 text-center text-[14.5px] text-faint">표시할 주장이 없습니다.</p>
         ) : pdfAvailable ? (
           <PdfViewer
             key={`${activeDetail.claim.report_id}:${activeDetail.claim.id}`}
@@ -90,11 +90,11 @@ export function PdfPanel({
             claimId={activeDetail.claim.id}
           />
         ) : (
-          <div className="rounded-xl bg-bg px-4 py-3">
-            <p className="text-[12px] font-semibold text-faint">
+          <div className="rounded-sm border border-line bg-bg px-4 py-3">
+            <p className="text-[13.5px] font-semibold text-faint">
               원문 PDF 없음 (데모용 합성 사례) · 보고서 원문 발췌
             </p>
-            <blockquote className="mt-2 text-[13px] leading-relaxed text-ink">
+            <blockquote className="mt-2 text-[14.5px] leading-relaxed text-ink">
               “
               <HighlightedText
                 text={activeDetail.claim.raw_text}

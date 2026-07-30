@@ -22,11 +22,11 @@ export function SiteHeader() {
               priority
             />
             <span className="h-6 w-px bg-line" />
-            <span className="font-logo text-[22px] tracking-tight text-ink-strong">
+            <span className="font-logo text-[23.5px] tracking-tight text-ink-strong">
               나란
             </span>
           </Link>
-          <nav className="flex items-center gap-1 text-[13.5px]">
+          <nav className="flex items-center gap-1 text-[15px]">
             <Link
               href="/dashboard"
               className={`rounded-full px-3.5 py-2 font-semibold ${
@@ -51,7 +51,7 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2 border-l border-line pl-4">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-ink-strong">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-soft text-[13px] font-semibold text-ink-strong">
             {CURRENT_USER.initials}
           </span>
           <div className="hidden leading-tight sm:block">

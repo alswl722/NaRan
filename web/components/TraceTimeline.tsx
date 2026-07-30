@@ -4,7 +4,7 @@ import type { TraceEvent } from "@/lib/types";
  * 도구명·근거처럼 감사에만 필요한 세부 정보는 펼치기 전까지 숨긴다. */
 export function TraceTimeline({ events }: { events: TraceEvent[] }) {
   if (events.length === 0) {
-    return <p className="text-[13px] text-faint">기록된 분석 과정이 없습니다.</p>;
+    return <p className="text-[14.5px] text-faint">기록된 분석 과정이 없습니다.</p>;
   }
 
   return (
@@ -24,32 +24,32 @@ export function TraceTimeline({ events }: { events: TraceEvent[] }) {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="shrink-0 text-[11px] font-medium text-faint">
+                  <span className="shrink-0 text-[13px] font-medium text-faint">
                     {event.step_type}
                   </span>
-                  <span className="truncate text-[13px] font-semibold text-ink-strong">
+                  <span className="truncate text-[14.5px] font-semibold text-ink-strong">
                     {event.stage}
                   </span>
                 </div>
                 <p
-                  className="mt-0.5 truncate text-[12.5px] text-ink"
+                  className="mt-0.5 truncate text-[14px] text-ink"
                   title={event.input_summary}
                 >
                   {event.input_summary}
                 </p>
                 {hasDetail && (
                   <details className="mt-0.5">
-                    <summary className="cursor-pointer text-[11px] text-faint select-none">
+                    <summary className="cursor-pointer text-[13px] text-faint select-none">
                       세부 정보
                     </summary>
                     <div className="mt-1 flex flex-col gap-0.5">
                       {event.tool_name && (
-                        <span className="font-mono text-[11px] text-muted">
+                        <span className="font-mono text-[13px] text-muted">
                           {event.tool_name}
                         </span>
                       )}
                       {event.evidence.map((e, j) => (
-                        <span key={j} className="text-[11.5px] text-faint">
+                        <span key={j} className="text-[13.5px] text-faint">
                           · {e}
                         </span>
                       ))}
