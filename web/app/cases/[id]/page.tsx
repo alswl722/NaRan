@@ -336,10 +336,19 @@ export default function CaseDetailPage({
               </p>
             )}
             {lastExecution.skipped_claims.length > 0 && (
-              <p className="mt-1">
-                공개 데이터와 자동 매칭되지 않은 주장{" "}
-                {lastExecution.skipped_claims.length}건
-              </p>
+              <div className="mt-1">
+                <p>
+                  공개 데이터와 자동 매칭되지 않은 주장{" "}
+                  {lastExecution.skipped_claims.length}건
+                </p>
+                <ul className="mt-0.5 list-disc pl-5 text-[13px]">
+                  {lastExecution.skipped_claims.map((claim) => (
+                    <li key={claim.id}>
+                      p.{claim.page} · {claim.scope ?? "Scope 미확인"} · {claim.metric}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}

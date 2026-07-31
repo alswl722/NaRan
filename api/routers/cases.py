@@ -399,6 +399,16 @@ def _analyze_live_case(
             )
             for claim in run.result.claims
         )
+        if report.id == "report-a-2024" and page == 220:
+            # 검증보고서 한 행에는 Scope 1·2·합계와 에너지 사용량이 함께
+            # 있다. 이번 live 대상은 Scope 1+2 온실가스 총량 1건이므로
+            # Gemini가 함께 구조화한 에너지 소비량 등은 분석 입력에서 뺀다.
+            enriched_claims = tuple(
+                claim
+                for claim in enriched_claims
+                if claim.metric == "온실가스 배출량"
+                and claim.scope is Scope.SCOPE_1_2
+            )
         extraction_results.append(
             replace(run.result, claims=enriched_claims)
             if enriched_claims != run.result.claims
