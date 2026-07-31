@@ -84,10 +84,12 @@ export function PdfPanel({
           <p className="p-6 text-center text-[14.5px] text-faint">표시할 주장이 없습니다.</p>
         ) : pdfAvailable ? (
           <PdfViewer
-            key={`${activeDetail.claim.report_id}:${activeDetail.claim.id}`}
+            key={activeDetail.claim.report_id}
             reportId={activeDetail.claim.report_id}
             initialPage={activeDetail.claim.page}
             claimId={activeDetail.claim.id}
+            claimDetails={claimDetails}
+            onSelectClaim={onSelectClaim}
           />
         ) : (
           <div className="rounded-sm border border-line bg-bg px-4 py-3">

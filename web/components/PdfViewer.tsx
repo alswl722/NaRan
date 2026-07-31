@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { apiGet, BASE_URL } from "@/lib/api";
+import type { ClaimDetail } from "@/lib/types";
 
 // CDN이 아니라 번들에 포함된 worker를 쓴다 — API 키·네트워크 없이 A·B·C가
 // 재현돼야 한다는 완료 조건(claude.md)과 같은 이유로, 오프라인에서도 PDF
@@ -39,10 +40,14 @@ export function PdfViewer({
   reportId,
   initialPage,
   claimId,
+  claimDetails = [],
+  onSelectClaim,
 }: {
   reportId: string;
   initialPage: number;
   claimId?: string;
+  claimDetails?: ClaimDetail[];
+  onSelectClaim?: (claimId: string) => void;
 }) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -63,6 +68,14 @@ export function PdfViewer({
     scrollLeft: 0,
     scrollTop: 0,
   });
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setCurrentPage(initialPage);
+      setRenderedHeight(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialPage, claimId]);
 
   useEffect(() => {
     function syncFullscreenState() {
@@ -170,9 +183,36 @@ export function PdfViewer({
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2">
-        <span className="text-[13.5px] font-semibold text-ink-strong">
-          {numPages ? `p.${currentPage} / ${numPages}` : "불러오는 중…"}
-        </span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="text-[13.5px] font-semibold text-ink-strong">
+            {numPages ? `p.${currentPage} / ${numPages}` : "불러오는 중…"}
+          </span>
+          {isFullscreen && claimDetails.length > 0 && onSelectClaim && (
+            <div
+              className="flex items-center gap-1 rounded-full bg-bg p-1"
+              aria-label="배출량 범위 선택"
+            >
+              {claimDetails.map((detail) => {
+                const active = detail.claim.id === claimId;
+                return (
+                  <button
+                    key={detail.claim.id}
+                    type="button"
+                    onClick={() => onSelectClaim(detail.claim.id)}
+                    aria-pressed={active}
+                    className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-semibold transition-colors ${
+                      active
+                        ? "bg-surface text-ink-strong shadow-sm"
+                        : "text-faint hover:text-ink-strong"
+                    }`}
+                  >
+                    {detail.claim.scope || detail.claim.metric}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-1.5">
           {numPages && (
             <>
