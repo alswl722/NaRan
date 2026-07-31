@@ -8,6 +8,7 @@ POST /cases/{id}/analyze  분석 실행
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import replace
 import json
 from pathlib import Path
 from typing import Literal
@@ -43,7 +44,14 @@ from db.models import (
     VerdictRecord,
 )
 from db.session import get_session
-from naran.contracts import ExecutionMode, Report as ReportContract
+from naran.contracts import (
+    EntityLevel,
+    ExecutionMode,
+    OrganizationBoundary,
+    Report as ReportContract,
+    Scope,
+    Scope2Method,
+)
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -75,6 +83,25 @@ LIVE_TABLE_CONTEXT_BY_REPORT_PAGE = {
 }
 LIVE_TABLE_ROW_MARKER_BY_REPORT_PAGE = {
     ("report-a-2024", 220): "삼성바이오로직스 주식회사",
+}
+LIVE_CLAIM_DEFAULTS_BY_REPORT_PAGE = {
+    ("report-a-2024", 171): {
+        "entity_level": EntityLevel.COMPANY,
+        "organization_boundary": OrganizationBoundary.SEPARATE,
+        "geographic_boundary": "대한민국 국내 사업장",
+    },
+    ("report-a-2024", 172): {
+        "entity_level": EntityLevel.COMPANY,
+        "organization_boundary": OrganizationBoundary.SEPARATE,
+        "geographic_boundary": "대한민국 국내 사업장",
+    },
+    ("report-a-2024", 220): {
+        "entity_level": EntityLevel.COMPANY,
+        "organization_boundary": OrganizationBoundary.SEPARATE,
+        "geographic_boundary": "대한민국",
+        "scope": Scope.SCOPE_1_2,
+        "scope2_method": Scope2Method.ETS,
+    },
 }
 
 _IMPORTANCE_ORDER = {"높음": 0, "보통": 1, "낮음": 2}
@@ -361,7 +388,22 @@ def _analyze_live_case(
                 status_code=502,
                 detail=f"Gemini live 추출 실패(p.{page}): {run.error}",
             )
-        extraction_results.append(run.result)
+        defaults = LIVE_CLAIM_DEFAULTS_BY_REPORT_PAGE.get((report.id, page), {})
+        enriched_claims = tuple(
+            claim.model_copy(
+                update={
+                    field: value
+                    for field, value in defaults.items()
+                    if getattr(claim, field) is None
+                }
+            )
+            for claim in run.result.claims
+        )
+        extraction_results.append(
+            replace(run.result, claims=enriched_claims)
+            if enriched_claims != run.result.claims
+            else run.result
+        )
         attempts += run.result.attempts
         if run.result.failure_reason:
             fallback_reasons.append(

@@ -262,6 +262,33 @@ def test_pdf_subscript_emission_units_are_normalized(
     assert result.claims[0].unit == expected
 
 
+def test_parser_table_context_is_not_exposed_as_report_original() -> None:
+    data = case("sample_case_c.json")
+    source_row = "삼성바이오로직스 주식회사 71,840.290 154,678.989 226,519"
+    contextual_candidate = (
+        "[표 문맥: 2024년 검증보고서 · 추출 대상 Scope 1+2 총량 1건] "
+        + source_row
+    )
+    response = draft_batch(
+        data["claims"][0],
+        raw_text=contextual_candidate,
+        page=220,
+    )
+
+    result = extract_claims(
+        document_hash="sha256:context-cleanup",
+        report_id=data["report"]["id"],
+        page=220,
+        candidate_texts=(contextual_candidate,),
+        mode=ExecutionMode.LIVE,
+        cache=cache(),
+        client=SequenceClient([response]),
+    )
+
+    assert result.claims[0].raw_text == source_row
+    assert result.claims[0].evidence == "보고서 p.220 표 · 분리된 표 제목과 수치 행의 문맥 복원"
+
+
 def test_year_only_period_is_normalized_to_annual_bounds() -> None:
     data = case("sample_case_c.json")
     response = draft_batch(

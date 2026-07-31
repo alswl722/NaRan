@@ -272,14 +272,28 @@ def _normalize_emission_unit(value: str | None) -> str | None:
     return aliases.get(normalized, value.strip())
 
 
+def _clean_table_context_text(raw_text: str, page: int) -> tuple[str, str | None]:
+    """Gemini 입력용 표 문맥 접두어는 사용자에게 원문처럼 노출하지 않는다."""
+
+    cleaned = re.sub(r"^\[표 문맥:[^\]]+\]\s*", "", raw_text).strip()
+    if cleaned == raw_text.strip():
+        return cleaned, None
+    return cleaned, f"보고서 p.{page} 표 · 분리된 표 제목과 수치 행의 문맥 복원"
+
+
 def _to_claims(
     batch: ClaimDraftBatch,
     *,
     report_id: str,
     mode: ExecutionMode,
 ) -> tuple[Claim, ...]:
-    return tuple(
-        Claim.model_validate(
+    claims: list[Claim] = []
+    for index, draft in enumerate(batch.claims, start=1):
+        raw_text, contextual_evidence = _clean_table_context_text(
+            draft.raw_text, draft.page
+        )
+        claims.append(
+            Claim.model_validate(
             {
                 **draft.model_dump(mode="python"),
                 "period_start": _normalize_period_date(
@@ -291,13 +305,15 @@ def _to_claims(
                     period_end=True,
                 ),
                 "unit": _normalize_emission_unit(draft.unit),
-                "id": _claim_id(report_id, draft.page, index, draft.raw_text),
+                "raw_text": raw_text,
+                "evidence": contextual_evidence or draft.evidence,
+                "id": _claim_id(report_id, draft.page, index, raw_text),
                 "report_id": report_id,
                 "extraction_mode": mode,
             }
         )
-        for index, draft in enumerate(batch.claims, start=1)
-    )
+        )
+    return tuple(claims)
 
 
 def extract_claims(

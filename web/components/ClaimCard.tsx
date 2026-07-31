@@ -275,14 +275,20 @@ export function ClaimCard({
                 <div className="border-r border-line px-3 py-2.5 text-center">
                   <div className="text-[13px] text-faint">보고서</div>
                   <div className="mt-0.5 text-[17.5px] font-bold tabular-nums text-ink-strong">
-                    {formatValueWithUnit(comp.verdict.claim_raw_value, claim.unit)}
+                    {formatValueWithUnit(
+                      comp.verdict.claim_raw_value ?? claim.value,
+                      claim.unit,
+                    )}
                   </div>
                 </div>
                 <div className="px-3 py-2.5 text-center">
                   <div className="text-[13px] text-faint">공개 데이터</div>
                   <div className="mt-0.5 text-[17.5px] font-bold tabular-nums text-ink-strong">
                     {comp.public_fact
-                      ? formatValueWithUnit(comp.verdict.public_raw_value, comp.public_fact.unit)
+                      ? formatValueWithUnit(
+                          comp.verdict.public_raw_value ?? comp.public_fact.raw_value,
+                          comp.public_fact.unit,
+                        )
                       : "—"}
                   </div>
                 </div>
