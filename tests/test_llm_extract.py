@@ -234,6 +234,34 @@ def test_live_period_display_formats_are_normalized_without_value_inference() ->
     assert result.claims[0].period_end == "2024-12-31"
 
 
+@pytest.mark.parametrize(
+    ("raw_unit", "expected"),
+    [
+        ("tCOeq", "tCO2eq"),
+        ("tCO₂eq", "tCO2eq"),
+        ("t CO 2 eq", "tCO2eq"),
+        ("1000 tonnes CO2e", "1000 tCO2eq"),
+    ],
+)
+def test_pdf_subscript_emission_units_are_normalized(
+    raw_unit: str, expected: str
+) -> None:
+    data = case("sample_case_c.json")
+    response = draft_batch(data["claims"][0], unit=raw_unit)
+
+    result = extract_claims(
+        document_hash=f"sha256:unit-{raw_unit}",
+        report_id=data["report"]["id"],
+        page=1,
+        candidate_texts=(data["claims"][0]["raw_text"],),
+        mode=ExecutionMode.LIVE,
+        cache=cache(),
+        client=SequenceClient([response]),
+    )
+
+    assert result.claims[0].unit == expected
+
+
 def test_year_only_period_is_normalized_to_annual_bounds() -> None:
     data = case("sample_case_c.json")
     response = draft_batch(

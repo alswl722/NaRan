@@ -250,6 +250,28 @@ def _normalize_period_date(value: str | None, *, period_end: bool) -> str | None
         return value
 
 
+def _normalize_emission_unit(value: str | None) -> str | None:
+    """PDF 아래첨자·공백 손실로 생긴 온실가스 단위 표기만 정규화한다."""
+
+    if value is None:
+        return None
+    compact = re.sub(
+        r"\s+",
+        "",
+        value.translate(str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")),
+    )
+    normalized = compact.casefold().replace("tonnes", "t").replace("tonne", "t")
+    aliases = {
+        "tcoeq": "tCO2eq",
+        "tco2e": "tCO2eq",
+        "tco2eq": "tCO2eq",
+        "1000tcoeq": "1000 tCO2eq",
+        "1000tco2e": "1000 tCO2eq",
+        "1000tco2eq": "1000 tCO2eq",
+    }
+    return aliases.get(normalized, value.strip())
+
+
 def _to_claims(
     batch: ClaimDraftBatch,
     *,
@@ -268,6 +290,7 @@ def _to_claims(
                     draft.period_end,
                     period_end=True,
                 ),
+                "unit": _normalize_emission_unit(draft.unit),
                 "id": _claim_id(report_id, draft.page, index, draft.raw_text),
                 "report_id": report_id,
                 "extraction_mode": mode,
