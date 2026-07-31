@@ -40,7 +40,6 @@ export default function CaseDetailPage({
   const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisMode, setAnalysisMode] = useState<"demo" | "live">("demo");
-  const [allowCacheFallback, setAllowCacheFallback] = useState(true);
   const [lastExecution, setLastExecution] = useState<AnalyzeExecution | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -161,7 +160,7 @@ export default function CaseDetailPage({
         `/cases/${caseId}/analyze`,
         {
           mode: analysisMode,
-          allow_cache_fallback: analysisMode === "live" && allowCacheFallback,
+          allow_cache_fallback: false,
         },
         ANALYZE_TIMEOUT_MS,
       );
@@ -293,18 +292,6 @@ export default function CaseDetailPage({
                 : "분석 시작"}
           </button>
         </div>
-        {analysisMode === "live" && (
-          <label className="mt-2 flex items-center gap-2 text-[14px] text-muted">
-            <input
-              type="checkbox"
-              checked={allowCacheFallback}
-              onChange={(event) => setAllowCacheFallback(event.target.checked)}
-              disabled={analyzing}
-              className="accent-brand"
-            />
-            Gemini 실패 시 검증된 저장값 사용
-          </label>
-        )}
         {lastExecution && (
           <div
             className={`mt-3 rounded-sm border px-4 py-3 text-[14px] ${
