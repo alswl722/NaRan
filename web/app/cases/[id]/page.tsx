@@ -307,7 +307,7 @@ export default function CaseDetailPage({
             )}
             {lastExecution.skipped_claims.length > 0 && (
               <p className="mt-1">
-                공개 데이터가 없어 대조를 건너뛴 주장{" "}
+                공개 데이터와 자동 매칭되지 않은 주장{" "}
                 {lastExecution.skipped_claims.length}건
               </p>
             )}

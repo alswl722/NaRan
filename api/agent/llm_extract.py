@@ -27,7 +27,7 @@ from naran.contracts import (
 
 
 DEFAULT_MODEL = "gemini-3.6-flash"
-DEFAULT_PROMPT_VERSION = "claim-extract-v2"
+DEFAULT_PROMPT_VERSION = "claim-extract-v3"
 DEFAULT_SCHEMA_VERSION = "claim-draft-v1"
 
 

@@ -5,8 +5,8 @@ import pytest
 
 from api.agent.llm_extract import VerifiedClaimCache
 from api.agent.orchestrator import RunState
-from api.agent.pipeline import analyze_verified_case
-from naran.contracts import AnalysisStatus, Verdict
+from api.agent.pipeline import _matching_facts, analyze_verified_case
+from naran.contracts import AnalysisStatus, Claim, ClaimType, PublicFact, Verdict
 
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
@@ -59,6 +59,53 @@ def test_case_a_runs_all_three_verified_claims(
         for run in analysis.runs
         if run.outcome is not None
     } == {"exact", "precision_compatible"}
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        "GHG emissions",
+        "Direct emissions (Scope 1)",
+        "Greenhouse gas emissions",
+        "온실가스 총 배출량",
+    ],
+)
+def test_live_metric_aliases_match_ghg_public_fact(metric: str) -> None:
+    case = load("sample_case_a.json")
+    claim = Claim.model_validate(case["claims"][0]).model_copy(
+        update={"metric": metric}
+    )
+    fact = PublicFact.model_validate(case["public_facts"][0])
+
+    assert _matching_facts(claim, (fact,)) == (fact,)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        "GHG emissions intensity",
+        "GHG emissions reduction (BAU)",
+        "온실가스 배출집약도",
+    ],
+)
+def test_non_total_emission_metrics_do_not_match_public_total(metric: str) -> None:
+    case = load("sample_case_a.json")
+    claim = Claim.model_validate(case["claims"][0]).model_copy(
+        update={"metric": metric}
+    )
+    fact = PublicFact.model_validate(case["public_facts"][0])
+
+    assert _matching_facts(claim, (fact,)) == ()
+
+
+def test_reduction_target_does_not_match_public_performance_fact() -> None:
+    case = load("sample_case_a.json")
+    claim = Claim.model_validate(case["claims"][0]).model_copy(
+        update={"claim_type": ClaimType.REDUCTION_TARGET}
+    )
+    fact = PublicFact.model_validate(case["public_facts"][0])
+
+    assert _matching_facts(claim, (fact,)) == ()
 
 
 def test_case_b_stops_without_calculation(

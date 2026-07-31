@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from urllib.parse import urlparse
 
 from api.agent.llm_extract import (
@@ -17,11 +18,13 @@ from api.agent.orchestrator import AnalysisRun, RunLock, analyze_performance
 from db.entity_map import DEFAULT_ENTITY_MAP, EntityMap, SourceSystem
 from naran.contracts import (
     Claim,
+    ClaimType,
     Company,
     ExecutionMode,
     MonitoringCase,
     PublicFact,
     Report,
+    ValueBasis,
 )
 
 
@@ -50,14 +53,58 @@ def _reporting_year(claim: Claim) -> int:
     return int(claim.period_start[:4])
 
 
+_GHG_METRIC = "온실가스 배출량"
+_NON_TOTAL_EMISSION_TERMS = (
+    "감축",
+    "목표",
+    "원단위",
+    "집약도",
+    "배출원",
+    "reduction",
+    "reduced",
+    "target",
+    "intensity",
+    "avoided",
+    "by source",
+    "bau",
+)
+
+
+def _canonical_metric(metric: str) -> str:
+    """명시적인 온실가스 배출 실적 동의어만 공통 지표명으로 맞춘다."""
+
+    normalized = re.sub(r"\s+", " ", metric.strip().casefold())
+    if any(term in normalized for term in _NON_TOTAL_EMISSION_TERMS):
+        return normalized
+    if (
+        ("온실가스" in normalized and "배출" in normalized)
+        or re.search(r"\bghg\s+emissions?\b", normalized)
+        or "greenhouse gas emission" in normalized
+        or re.search(r"\b(?:direct|indirect)\s+emissions?\b", normalized)
+    ):
+        return _GHG_METRIC
+    return normalized
+
+
 def _matching_facts(
     claim: Claim,
     public_facts: tuple[PublicFact, ...],
 ) -> tuple[PublicFact, ...]:
+    if claim.claim_type is not ClaimType.PERFORMANCE:
+        return ()
+    if claim.value_basis is ValueBasis.INTENSITY:
+        return ()
+    claim_metric = _canonical_metric(claim.metric)
     return tuple(
         fact
         for fact in public_facts
-        if fact.metric == claim.metric and fact.scope == claim.scope
+        if _canonical_metric(fact.metric) == claim_metric
+        and fact.scope == claim.scope
+        and (
+            claim.value_basis is None
+            or fact.value_basis is None
+            or fact.value_basis == claim.value_basis
+        )
     )
 
 
