@@ -59,6 +59,16 @@ LIVE_EXTRACTION_PAGES_BY_REPORT = {
     "report-a-2024": (171, 172),
     "report-b-2024": (68,),
 }
+LIVE_TABLE_CONTEXT_BY_REPORT_PAGE = {
+    (
+        "report-a-2024",
+        171,
+    ): "Scope 1 온실가스 배출량 · 대한민국 국내 사업장 · 2022·2023·2024 순",
+    (
+        "report-a-2024",
+        172,
+    ): "Scope 2 온실가스 배출량 · 배출권거래제 기준 · 대한민국 국내 사업장 · 2022·2023·2024 순",
+}
 
 _IMPORTANCE_ORDER = {"높음": 0, "보통": 1, "낮음": 2}
 
@@ -300,6 +310,9 @@ def _analyze_live_case(
             client=client,
             model_name=client.model_name,
             prompt_version=client.prompt_version,
+            table_context_label=LIVE_TABLE_CONTEXT_BY_REPORT_PAGE.get(
+                (report.id, page)
+            ),
         )
 
     # 사례 A처럼 근거 페이지가 여러 장이면 순차 실행 시

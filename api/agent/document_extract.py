@@ -70,6 +70,7 @@ def extract_document_page(
     model_name: str = DEFAULT_MODEL,
     prompt_version: str = DEFAULT_PROMPT_VERSION,
     schema_version: str = DEFAULT_SCHEMA_VERSION,
+    table_context_label: str | None = None,
     run_lock: RunLock = DEFAULT_RUN_LOCK,
     clock: Callable[[], datetime] = _utc_now,
 ) -> DocumentExtractionRun:
@@ -126,13 +127,47 @@ def extract_document_page(
         if page in filtered.pages_without_text:
             raise ValueError("선택한 PDF 페이지에 텍스트 레이어가 없습니다")
 
+        candidate_texts = [
+            candidate.raw_text for candidate in filtered.candidates
+        ]
+        if table_context_label:
+            # 복잡한 양단 표는 Scope 제목과 국내 사업장 수치가 서로 다른
+            # 텍스트 조각으로 추출된다. 표를 좌·우 반으로 나눈 뒤 국내
+            # 사업장 행에 화면상 상위 제목을 붙여 Gemini에 문맥을 보존한다.
+            # 값은 코드에 저장하지 않고 매 실행마다 PDF 표에서 읽는다.
+            contextual_rows: list[str] = []
+            for table in page_content.tables:
+                for row in table.rows:
+                    midpoint = max(1, len(row) // 2)
+                    # 중앙 구분선 주변의 연도 값 열이 페이지마다 1~2칸
+                    # 다르므로 왼쪽 조각을 조금 겹쳐 잘라 최신연도 값을
+                    # 잃지 않는다.
+                    left_end = min(len(row), (len(row) + 1) // 2 + 2)
+                    for segment in (row[:left_end], row[midpoint:]):
+                        cells = [
+                            cell.replace("\n", " ").strip()
+                            for cell in segment
+                            if cell.strip()
+                        ]
+                        joined = " ".join(cells)
+                        domestic_at = joined.find("국내 사업")
+                        if domestic_at < 0:
+                            continue
+                        domestic_row = joined[domestic_at:]
+                        if "tCO" not in domestic_row or not any(
+                            char.isdigit() for char in domestic_row
+                        ):
+                            continue
+                        contextual_rows.append(
+                            f"[표 문맥: {table_context_label}] {domestic_row}"
+                        )
+            candidate_texts.extend(dict.fromkeys(contextual_rows))
+
         result = extract_claims(
             document_hash=document.file_hash,
             report_id=report.id,
             page=page,
-            candidate_texts=tuple(
-                candidate.raw_text for candidate in filtered.candidates
-            ),
+            candidate_texts=tuple(candidate_texts),
             mode=mode,
             cache=cache,
             client=client,

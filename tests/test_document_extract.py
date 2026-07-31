@@ -14,6 +14,18 @@ REFERENCES = ROOT / "references"
 NOW = datetime.fromisoformat("2026-07-28T12:00:00+09:00")
 
 
+class CapturingClient:
+    model_name = "gemini-3.6-flash"
+    prompt_version = "claim-extract-v3"
+
+    def __init__(self) -> None:
+        self.candidate_texts: tuple[str, ...] = ()
+
+    def extract(self, *, candidate_texts, page, output_schema) -> str:
+        self.candidate_texts = candidate_texts
+        return '{"claims":[]}'
+
+
 def case(name: str) -> dict:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
 
@@ -67,6 +79,59 @@ def test_filter_counts_and_candidate_locations_are_traced() -> None:
     assert "excluded=" in event.input_summary
     assert event.evidence
     assert all(location.startswith("page:68:line:") for location in event.evidence)
+
+
+def test_table_context_restores_scope_header_to_domestic_value_row() -> None:
+    data = case("sample_case_a.json")
+    client = CapturingClient()
+
+    run = extract_document_page(
+        run_id="extract-a-171-table-context",
+        pdf_path=REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        report=Report.model_validate(data["report"]),
+        page=171,
+        mode=ExecutionMode.LIVE,
+        cache=VerifiedClaimCache(),
+        client=client,
+        table_context_label=(
+            "Scope 1 온실가스 배출량 · 대한민국 국내 사업장 · "
+            "2022·2023·2024 순"
+        ),
+        run_lock=RunLock(),
+        clock=lambda: NOW,
+    )
+
+    assert run.state is RunState.COMPLETED
+    restored = [
+        text
+        for text in client.candidate_texts
+        if text.startswith("[표 문맥:") and "71,840.290" in text
+    ]
+    assert len(restored) == 1
+    assert "Scope 1 온실가스 배출량" in restored[0]
+    assert "국내 사업장" in restored[0]
+
+    scope2_client = CapturingClient()
+    scope2_run = extract_document_page(
+        run_id="extract-a-172-table-context",
+        pdf_path=REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        report=Report.model_validate(data["report"]),
+        page=172,
+        mode=ExecutionMode.LIVE,
+        cache=VerifiedClaimCache(),
+        client=scope2_client,
+        table_context_label=(
+            "Scope 2 온실가스 배출량 · 배출권거래제 기준 · "
+            "대한민국 국내 사업장 · 2022·2023·2024 순"
+        ),
+        run_lock=RunLock(),
+        clock=lambda: NOW,
+    )
+    assert scope2_run.state is RunState.COMPLETED
+    assert any(
+        "Scope 2 온실가스 배출량" in text and "154,678.989" in text
+        for text in scope2_client.candidate_texts
+    )
 
 
 def test_report_hash_mismatch_is_visible_failure() -> None:
