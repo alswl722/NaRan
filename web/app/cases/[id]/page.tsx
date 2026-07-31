@@ -236,23 +236,22 @@ export default function CaseDetailPage({
         ← 대기열로
       </Link>
 
-      <header className="mt-3 mb-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-ink-strong">
-              {caseSummary.company_name ?? caseSummary.company_id}
-            </h1>
-            {caseSummary.monitoring_data_synthetic && (
-              <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[13.5px] font-medium text-muted">
-                {caseSummary.evidence_data_synthetic
-                  ? "완전 합성 사례"
-                  : "실제 공개자료 · 여신정보 데모"}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-[15.5px] text-muted">
-            {caseSummary.report_title} · {caseSummary.case_type}
-          </p>
+      <header className="mt-3 mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold text-ink-strong">
+            {caseSummary.company_name ?? caseSummary.company_id}
+          </h1>
+          {caseSummary.monitoring_data_synthetic && (
+            <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[13.5px] font-medium text-muted">
+              {caseSummary.evidence_data_synthetic
+                ? "완전 합성 사례"
+                : "실제 공개자료 · 여신정보 데모"}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-[15.5px] text-muted">
+          {caseSummary.report_title} · {caseSummary.case_type}
+        </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <div className="flex rounded-sm border border-line bg-white p-1">
@@ -292,53 +291,6 @@ export default function CaseDetailPage({
                 : "분석 시작"}
           </button>
         </div>
-        {lastExecution && (
-          <div
-            className={`mt-3 rounded-sm border px-4 py-3 text-[14px] ${
-              lastExecution.execution_mode === "live"
-                ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-                : lastExecution.execution_mode === "fallback"
-                  ? "border-amber-300 bg-amber-50 text-amber-900"
-                  : "border-line bg-white text-muted"
-            }`}
-          >
-            <span className="font-bold">
-              {lastExecution.execution_mode === "live"
-                ? "Gemini 실시간 분석 완료"
-                : lastExecution.execution_mode === "fallback"
-                  ? "실시간 분석 실패 · 검증값 사용"
-                  : "검증 저장값으로 분석 완료"}
-            </span>
-            <span className="ml-2">
-              {lastExecution.model ? `${lastExecution.model} · ` : ""}
-              p.{lastExecution.pages.join(", ")} · 시도 {lastExecution.attempts}회
-            </span>
-            <p className="mt-1">
-              추출 {lastExecution.extracted_claim_count}건 · 공개 데이터 대조{" "}
-              {lastExecution.compared_claim_count}건
-            </p>
-            {lastExecution.fallback_reasons.length > 0 && (
-              <p className="mt-1 break-words">
-                {lastExecution.fallback_reasons.join(" | ")}
-              </p>
-            )}
-            {lastExecution.skipped_claims.length > 0 && (
-              <div className="mt-1">
-                <p>
-                  공개 데이터와 자동 매칭되지 않은 주장{" "}
-                  {lastExecution.skipped_claims.length}건
-                </p>
-                <ul className="mt-0.5 list-disc pl-5 text-[13px]">
-                  {lastExecution.skipped_claims.map((claim) => (
-                    <li key={claim.id}>
-                      p.{claim.page} · {claim.scope ?? "Scope 미확인"} · {claim.metric}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
         {analysisError && (
           <p className="mt-2 text-[14.5px] text-status-unexplained">{analysisError}</p>
         )}
@@ -347,9 +299,55 @@ export default function CaseDetailPage({
             최신 사례 정보를 새로고침하지 못했습니다. 현재 표시된 결과는 이전 조회 내용입니다.
           </p>
         )}
-        </div>
-        {analysisProgress && (
-          <AnalysisProgressPanel progress={analysisProgress} />
+
+        {/* 실행 요약과 분석 과정 패널을 같은 시작 높이에서 나란히 배치 */}
+        {(lastExecution || analysisProgress) && (
+          <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]">
+            <div>
+            {lastExecution && (
+              <div className="max-h-[310px] min-h-[210px] overflow-y-auto rounded-sm border border-line bg-white px-4 py-3 text-[14px] text-ink">
+                <span className="font-bold text-ink-strong">
+                  {lastExecution.execution_mode === "live"
+                    ? "Gemini 실시간 분석 완료"
+                    : lastExecution.execution_mode === "fallback"
+                      ? "실시간 분석 실패 · 검증값 사용"
+                      : "검증 저장값으로 분석 완료"}
+                </span>
+                <span className="ml-2 text-muted">
+                  {lastExecution.model ? `${lastExecution.model} · ` : ""}
+                  p.{lastExecution.pages.join(", ")} · 시도 {lastExecution.attempts}회
+                </span>
+                <p className="mt-1">
+                  추출 {lastExecution.extracted_claim_count}건 · 공개 데이터 대조{" "}
+                  {lastExecution.compared_claim_count}건
+                </p>
+                {lastExecution.fallback_reasons.length > 0 && (
+                  <p className="mt-1 break-words text-status-unexplained">
+                    {lastExecution.fallback_reasons.join(" | ")}
+                  </p>
+                )}
+                {lastExecution.skipped_claims.length > 0 && (
+                  <div className="mt-1">
+                    <p>
+                      공개 데이터와 자동 매칭되지 않은 주장{" "}
+                      {lastExecution.skipped_claims.length}건
+                    </p>
+                    <ul className="mt-0.5 list-disc pl-5 text-[13px] text-muted">
+                      {lastExecution.skipped_claims.map((claim) => (
+                        <li key={claim.id}>
+                          p.{claim.page} · {claim.scope ?? "Scope 미확인"} · {claim.metric}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
+            {analysisProgress && (
+              <AnalysisProgressPanel progress={analysisProgress} />
+            )}
+          </div>
         )}
       </header>
 
@@ -378,31 +376,46 @@ export default function CaseDetailPage({
           activeClaimId={effectiveClaimId}
           onSelectClaim={selectClaimFromNavigator}
         />
-        <section
-          ref={claimListRef}
-          data-testid="claim-list"
-          className="flex flex-col gap-4 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto"
-        >
-          {claimDetails.map((detail) => (
-            <div
-              key={detail.claim.id}
-              data-testid={`claim-card-${detail.claim.id}`}
-              ref={(element) => {
-                if (element) claimCardRefs.current.set(detail.claim.id, element);
-                else claimCardRefs.current.delete(detail.claim.id);
-              }}
-            >
-              <ClaimCard
-                detail={detail}
-                runs={runsWithTrace.filter(({ run }) =>
-                  run.logical_key.includes(`-${detail.claim.id}-`),
-                )}
-                isActive={detail.claim.id === effectiveClaimId}
-                onSelect={() => setActiveClaimId(detail.claim.id)}
-              />
+        <div className="relative">
+          <section
+            ref={claimListRef}
+            data-testid="claim-list"
+            className={`flex flex-col gap-4 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto ${
+              analyzing ? "pointer-events-none opacity-40 blur-[1px]" : ""
+            }`}
+          >
+            {claimDetails.map((detail) => (
+              <div
+                key={detail.claim.id}
+                data-testid={`claim-card-${detail.claim.id}`}
+                ref={(element) => {
+                  if (element) claimCardRefs.current.set(detail.claim.id, element);
+                  else claimCardRefs.current.delete(detail.claim.id);
+                }}
+              >
+                <ClaimCard
+                  detail={detail}
+                  runs={runsWithTrace.filter(({ run }) =>
+                    run.logical_key.includes(`-${detail.claim.id}-`),
+                  )}
+                  isActive={detail.claim.id === effectiveClaimId}
+                  onSelect={() => setActiveClaimId(detail.claim.id)}
+                />
+              </div>
+            ))}
+          </section>
+
+          {analyzing && (
+            <div className="absolute inset-0 flex items-start justify-center pt-16">
+              <div className="flex items-center gap-2.5 rounded-full bg-surface px-4 py-2.5 shadow-card">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                <span className="text-[13.5px] font-semibold text-ink-strong">
+                  새 분석 결과를 기다리는 중…
+                </span>
+              </div>
             </div>
-          ))}
-        </section>
+          )}
+        </div>
       </div>
 
       {/* 담당자 검토 — claim 카드들 아래, 전체 폭으로 배치한다. */}
