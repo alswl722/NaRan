@@ -98,7 +98,7 @@ export function LiveTraceFeed() {
             실제 분석 과정
           </span>
           <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[12.5px] font-semibold text-ink-strong">
-            사례 B · 삼성전자
+            삼성전자
           </span>
         </div>
         <button
