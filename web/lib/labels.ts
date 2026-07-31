@@ -31,6 +31,16 @@ const EXPLANATION_LABELS: Record<string, string> = {
 
 const REVIEW_REASON_LABELS: Record<string, string> = {
   "출처의 수치 표시 규칙 확인 필요": "공개 데이터의 반올림·절사 기준 확인 필요",
+  value: "비교할 수치 확인 필요",
+  metric: "지표 정보 확인 필요",
+  unit: "단위 정보 확인 필요",
+  value_basis: "절대량·원단위 기준 확인 필요",
+  entity_level: "기업·사업장 단위 확인 필요",
+  organization_boundary: "조직경계 확인 필요",
+  geographic_boundary: "지역경계 확인 필요",
+  scope: "Scope 범위 확인 필요",
+  scope2_method: "Scope 2 산정 방식 확인 필요",
+  period: "보고기간 확인 필요",
 };
 
 export function explanationLabel(explanation: string): string {

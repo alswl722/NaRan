@@ -137,19 +137,29 @@ def extract_document_page(
             # 값은 코드에 저장하지 않고 매 실행마다 PDF 표에서 읽는다.
             contextual_rows: list[str] = []
             for table in page_content.tables:
+                method_by_half: list[str | None] = [None, None]
                 for row in table.rows:
                     midpoint = max(1, len(row) // 2)
                     # 중앙 구분선 주변의 연도 값 열이 페이지마다 1~2칸
                     # 다르므로 왼쪽 조각을 조금 겹쳐 잘라 최신연도 값을
                     # 잃지 않는다.
                     left_end = min(len(row), (len(row) + 1) // 2 + 2)
-                    for segment in (row[:left_end], row[midpoint:]):
+                    for half_index, segment in enumerate(
+                        (row[:left_end], row[midpoint:])
+                    ):
                         cells = [
                             cell.replace("\n", " ").strip()
                             for cell in segment
                             if cell.strip()
                         ]
                         joined = " ".join(cells)
+                        compact_joined = joined.replace(" ", "").casefold()
+                        if "location-based" in compact_joined:
+                            method_by_half[half_index] = "지역기반"
+                        elif "market-based" in compact_joined:
+                            method_by_half[half_index] = "시장기반"
+                        elif "배출권거래제" in compact_joined:
+                            method_by_half[half_index] = "배출권거래제 기준"
                         domestic_at = joined.find("국내 사업")
                         if domestic_at < 0:
                             continue
@@ -158,8 +168,14 @@ def extract_document_page(
                             char.isdigit() for char in domestic_row
                         ):
                             continue
+                        method_context = method_by_half[half_index]
+                        full_context = (
+                            f"{table_context_label} · {method_context}"
+                            if method_context
+                            else table_context_label
+                        )
                         contextual_rows.append(
-                            f"[표 문맥: {table_context_label}] {domestic_row}"
+                            f"[표 문맥: {full_context}] {domestic_row}"
                         )
             candidate_texts.extend(dict.fromkeys(contextual_rows))
 

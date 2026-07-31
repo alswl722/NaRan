@@ -121,15 +121,17 @@ def test_table_context_restores_scope_header_to_domestic_value_row() -> None:
         cache=VerifiedClaimCache(),
         client=scope2_client,
         table_context_label=(
-            "Scope 2 온실가스 배출량 · 배출권거래제 기준 · "
-            "대한민국 국내 사업장 · 2022·2023·2024 순"
+            "Scope 2 온실가스 배출량 · 대한민국 국내 사업장 · "
+            "2022·2023·2024 순"
         ),
         run_lock=RunLock(),
         clock=lambda: NOW,
     )
     assert scope2_run.state is RunState.COMPLETED
     assert any(
-        "Scope 2 온실가스 배출량" in text and "154,678.989" in text
+        "Scope 2 온실가스 배출량" in text
+        and "배출권거래제 기준" in text
+        and "154,678.989" in text
         for text in scope2_client.candidate_texts
     )
 

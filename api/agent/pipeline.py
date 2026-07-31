@@ -101,6 +101,11 @@ def _matching_facts(
         if _canonical_metric(fact.metric) == claim_metric
         and fact.scope == claim.scope
         and (
+            claim.scope2_method is None
+            or fact.scope2_method is None
+            or fact.scope2_method == claim.scope2_method
+        )
+        and (
             claim.value_basis is None
             or fact.value_basis is None
             or fact.value_basis == claim.value_basis
