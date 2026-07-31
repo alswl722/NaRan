@@ -51,8 +51,18 @@ export function PdfViewer({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<HighlightBox | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const viewerRef = useRef<HTMLDivElement | null>(null);
+  const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const widthBeforeFullscreen = useRef(DEFAULT_WIDTH);
+  const dragState = useRef({
+    active: false,
+    pointerId: -1,
+    x: 0,
+    y: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
+  });
 
   useEffect(() => {
     function syncFullscreenState() {
@@ -108,6 +118,48 @@ export function PdfViewer({
     } catch {
       setWidth(widthBeforeFullscreen.current);
     }
+  }
+
+  function startPan(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+    const viewport = scrollViewportRef.current;
+    if (!viewport) return;
+    const canPan =
+      viewport.scrollWidth > viewport.clientWidth ||
+      viewport.scrollHeight > viewport.clientHeight;
+    if (!canPan) return;
+
+    event.preventDefault();
+    viewport.setPointerCapture(event.pointerId);
+    dragState.current = {
+      active: true,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      scrollLeft: viewport.scrollLeft,
+      scrollTop: viewport.scrollTop,
+    };
+    setIsDragging(true);
+  }
+
+  function movePan(event: React.PointerEvent<HTMLDivElement>) {
+    const viewport = scrollViewportRef.current;
+    const drag = dragState.current;
+    if (!viewport || !drag.active || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    viewport.scrollLeft = drag.scrollLeft - (event.clientX - drag.x);
+    viewport.scrollTop = drag.scrollTop - (event.clientY - drag.y);
+  }
+
+  function stopPan(event: React.PointerEvent<HTMLDivElement>) {
+    const viewport = scrollViewportRef.current;
+    const drag = dragState.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) return;
+    if (viewport?.hasPointerCapture(event.pointerId)) {
+      viewport.releasePointerCapture(event.pointerId);
+    }
+    dragState.current.active = false;
+    setIsDragging(false);
   }
 
   return (
@@ -176,7 +228,16 @@ export function PdfViewer({
       </div>
 
       <div
-        className={`overflow-auto p-4 ${
+        ref={scrollViewportRef}
+        onPointerDown={startPan}
+        onPointerMove={movePan}
+        onPointerUp={stopPan}
+        onPointerCancel={stopPan}
+        onDragStart={(event) => event.preventDefault()}
+        aria-label="PDF 보기 영역. 확대 후 마우스로 끌어 이동할 수 있습니다."
+        className={`overflow-auto p-4 touch-none ${
+          isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+        } ${
           isFullscreen ? "h-[calc(100vh-45px)]" : "max-h-full"
         }`}
       >
@@ -185,7 +246,7 @@ export function PdfViewer({
             PDF를 불러오지 못했습니다: {loadError}
           </p>
         ) : (
-          <div className="flex justify-center">
+          <div className="flex min-w-max justify-center">
             <div className="relative inline-block">
               <Document
                 file={`${BASE_URL}/reports/${reportId}/pdf`}
