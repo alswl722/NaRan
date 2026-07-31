@@ -71,6 +71,8 @@ def extract_document_page(
     prompt_version: str = DEFAULT_PROMPT_VERSION,
     schema_version: str = DEFAULT_SCHEMA_VERSION,
     table_context_label: str | None = None,
+    table_context_row_marker: str = "국내 사업",
+    table_context_require_unit: bool = True,
     run_lock: RunLock = DEFAULT_RUN_LOCK,
     clock: Callable[[], datetime] = _utc_now,
 ) -> DocumentExtractionRun:
@@ -160,12 +162,15 @@ def extract_document_page(
                             method_by_half[half_index] = "시장기반"
                         elif "배출권거래제" in compact_joined:
                             method_by_half[half_index] = "배출권거래제 기준"
-                        domestic_at = joined.find("국내 사업")
-                        if domestic_at < 0:
+                        marker_at = joined.find(table_context_row_marker)
+                        if marker_at < 0:
                             continue
-                        domestic_row = joined[domestic_at:]
-                        if "tCO" not in domestic_row or not any(
-                            char.isdigit() for char in domestic_row
+                        value_row = joined[marker_at:]
+                        if (
+                            table_context_require_unit
+                            and "tCO" not in value_row
+                        ) or not any(
+                            char.isdigit() for char in value_row
                         ):
                             continue
                         method_context = method_by_half[half_index]
@@ -175,7 +180,7 @@ def extract_document_page(
                             else table_context_label
                         )
                         contextual_rows.append(
-                            f"[표 문맥: {full_context}] {domestic_row}"
+                            f"[표 문맥: {full_context}] {value_row}"
                         )
             candidate_texts.extend(dict.fromkeys(contextual_rows))
 

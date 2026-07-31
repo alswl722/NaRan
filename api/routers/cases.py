@@ -53,10 +53,10 @@ REPORT_PDF_BY_ID = {
     "report-a-2024": "Samsung-Biologics-2025-ESG-Report_KR.pdf",
     "report-b-2024": "Samsung_Electronics_Sustainability_Report_2025_ENG.pdf",
 }
-# 데모 live 호출 범위. A의 p.220은 검증의견서 근거로 계속 보존하지만,
-# 수치 Claim을 추출할 페이지가 아니므로 Gemini 호출 대상에서는 제외한다.
+# 데모 live 호출 범위. A의 p.220은 제3자 검증의견서에 표시된 Scope 1+2
+# 정수 합계와 표시 근거를 실시간 추출하기 위해 포함한다.
 LIVE_EXTRACTION_PAGES_BY_REPORT = {
-    "report-a-2024": (171, 172),
+    "report-a-2024": (171, 172, 220),
     "report-b-2024": (68,),
 }
 LIVE_TABLE_CONTEXT_BY_REPORT_PAGE = {
@@ -68,6 +68,13 @@ LIVE_TABLE_CONTEXT_BY_REPORT_PAGE = {
         "report-a-2024",
         172,
     ): "Scope 2 온실가스 배출량 · 공시 주체 삼성바이오로직스 기업 · 조직경계 별도 · 대한민국 국내 사업장 · 2022·2023·2024 순",
+    (
+        "report-a-2024",
+        220,
+    ): "2024년 온실가스 검증보고서 · 추출 대상 Scope 1+2 총량 1건 · 공시 주체 삼성바이오로직스 기업 · 조직경계 별도 · 운영통제하 전체 배출원 · 단위 tCO2eq",
+}
+LIVE_TABLE_ROW_MARKER_BY_REPORT_PAGE = {
+    ("report-a-2024", 220): "삼성바이오로직스 주식회사",
 }
 
 _IMPORTANCE_ORDER = {"높음": 0, "보통": 1, "낮음": 2}
@@ -313,6 +320,10 @@ def _analyze_live_case(
             table_context_label=LIVE_TABLE_CONTEXT_BY_REPORT_PAGE.get(
                 (report.id, page)
             ),
+            table_context_row_marker=LIVE_TABLE_ROW_MARKER_BY_REPORT_PAGE.get(
+                (report.id, page), "국내 사업"
+            ),
+            table_context_require_unit=page != 220,
         )
 
     # 사례 A처럼 근거 페이지가 여러 장이면 순차 실행 시

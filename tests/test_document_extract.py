@@ -135,6 +135,31 @@ def test_table_context_restores_scope_header_to_domestic_value_row() -> None:
         for text in scope2_client.candidate_texts
     )
 
+    total_client = CapturingClient()
+    total_run = extract_document_page(
+        run_id="extract-a-220-table-context",
+        pdf_path=REFERENCES / "Samsung-Biologics-2025-ESG-Report_KR.pdf",
+        report=Report.model_validate(data["report"]),
+        page=220,
+        mode=ExecutionMode.LIVE,
+        cache=VerifiedClaimCache(),
+        client=total_client,
+        table_context_label=(
+            "2024년 온실가스 검증보고서 · 추출 대상 Scope 1+2 총량 1건 · "
+            "공시 주체 삼성바이오로직스 기업 · 조직경계 별도 · "
+            "운영통제하 전체 배출원 · 단위 tCO2eq"
+        ),
+        table_context_row_marker="삼성바이오로직스 주식회사",
+        table_context_require_unit=False,
+        run_lock=RunLock(),
+        clock=lambda: NOW,
+    )
+    assert total_run.state is RunState.COMPLETED
+    assert any(
+        "추출 대상 Scope 1+2 총량 1건" in text and "226,519" in text
+        for text in total_client.candidate_texts
+    )
+
 
 def test_report_hash_mismatch_is_visible_failure() -> None:
     data = case("sample_case_a.json")
