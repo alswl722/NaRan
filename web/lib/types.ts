@@ -63,6 +63,26 @@ export type AnalyzeResponse = {
   execution: AnalyzeExecution;
 };
 
+export type AnalysisProgressEvent = {
+  id: number;
+  step_type: TraceStepType;
+  stage: string;
+  tool_name: string | null;
+  message: string;
+  created_at: string;
+};
+
+export type AnalysisProgress = {
+  case_id: string;
+  status: "idle" | "running" | "completed" | "failed";
+  mode: "demo" | "live" | null;
+  current: number;
+  total: number;
+  events: AnalysisProgressEvent[];
+  started_at: string | null;
+  finished_at: string | null;
+};
+
 export type RunSummary = {
   id: string;
   logical_key: string;

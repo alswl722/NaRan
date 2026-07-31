@@ -5,6 +5,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import { ANALYZE_TIMEOUT_MS, apiGet, apiPost, ApiError } from "@/lib/api";
 import type {
   AnalyzeExecution,
+  AnalysisProgress,
   AnalyzeResponse,
   CaseSummary,
   ClaimDetail,
@@ -16,6 +17,7 @@ import type {
   TraceEvent,
 } from "@/lib/types";
 import { ClaimCard } from "@/components/ClaimCard";
+import { AnalysisProgressPanel } from "@/components/AnalysisProgressPanel";
 import { HitlPanel } from "@/components/HitlPanel";
 import { PdfPanel } from "@/components/PdfPanel";
 import { reviewReasonLabel } from "@/lib/labels";
@@ -40,6 +42,7 @@ export default function CaseDetailPage({
   const [analysisMode, setAnalysisMode] = useState<"demo" | "live">("demo");
   const [allowCacheFallback, setAllowCacheFallback] = useState(true);
   const [lastExecution, setLastExecution] = useState<AnalyzeExecution | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const claimListRef = useRef<HTMLElement | null>(null);
@@ -99,6 +102,27 @@ export default function CaseDetailPage({
     };
   }, [loadAll]);
 
+  useEffect(() => {
+    if (!analyzing) return;
+    let alive = true;
+
+    async function pollProgress() {
+      const progress = await apiGet<AnalysisProgress>(
+        `/cases/${caseId}/analyze/progress`,
+      ).catch(() => null);
+      if (alive && progress?.status !== "idle") {
+        setAnalysisProgress(progress);
+      }
+    }
+
+    void pollProgress();
+    const interval = window.setInterval(pollProgress, 600);
+    return () => {
+      alive = false;
+      window.clearInterval(interval);
+    };
+  }, [analyzing, caseId]);
+
   // 좌측 PdfPanel에 보여줄 claim — 사용자가 고른 선택(activeClaimId)이
   // 현재 목록에 없으면(최초 로드, 재분석 후 claim 구성 변경 등) 첫 번째로
   // 대체한다. effect로 state를 동기화하지 않고 렌더 시점에 파생시킨다.
@@ -130,6 +154,7 @@ export default function CaseDetailPage({
 
   async function runAnalysis() {
     setAnalyzing(true);
+    setAnalysisProgress(null);
     setAnalysisError(null);
     try {
       const response = await apiPost<AnalyzeResponse>(
@@ -141,6 +166,10 @@ export default function CaseDetailPage({
         ANALYZE_TIMEOUT_MS,
       );
       setLastExecution(response.execution);
+      const finalProgress = await apiGet<AnalysisProgress>(
+        `/cases/${caseId}/analyze/progress`,
+      ).catch(() => null);
+      if (finalProgress) setAnalysisProgress(finalProgress);
       await loadAll();
     } catch (err) {
       setAnalysisError(
@@ -208,22 +237,23 @@ export default function CaseDetailPage({
         ← 대기열로
       </Link>
 
-      <header className="mt-3 mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-ink-strong">
-            {caseSummary.company_name ?? caseSummary.company_id}
-          </h1>
-          {caseSummary.monitoring_data_synthetic && (
-            <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[13.5px] font-medium text-muted">
-              {caseSummary.evidence_data_synthetic
-                ? "완전 합성 사례"
-                : "실제 공개자료 · 여신정보 데모"}
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-[15.5px] text-muted">
-          {caseSummary.report_title} · {caseSummary.case_type}
-        </p>
+      <header className="mt-3 mb-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold text-ink-strong">
+              {caseSummary.company_name ?? caseSummary.company_id}
+            </h1>
+            {caseSummary.monitoring_data_synthetic && (
+              <span className="rounded-full bg-muted/15 px-2.5 py-1 text-[13.5px] font-medium text-muted">
+                {caseSummary.evidence_data_synthetic
+                  ? "완전 합성 사례"
+                  : "실제 공개자료 · 여신정보 데모"}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-[15.5px] text-muted">
+            {caseSummary.report_title} · {caseSummary.case_type}
+          </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <div className="flex rounded-sm border border-line bg-white p-1">
@@ -320,6 +350,10 @@ export default function CaseDetailPage({
           <p className="mt-2 text-[14.5px] text-status-unexplained">
             최신 사례 정보를 새로고침하지 못했습니다. 현재 표시된 결과는 이전 조회 내용입니다.
           </p>
+        )}
+        </div>
+        {analysisProgress && (
+          <AnalysisProgressPanel progress={analysisProgress} />
         )}
       </header>
 
