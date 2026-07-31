@@ -24,6 +24,7 @@ from naran.contracts import (
     MonitoringCase,
     PublicFact,
     Report,
+    Scope,
     ValueBasis,
 )
 
@@ -207,6 +208,31 @@ def analyze_case_extractions(
     run_lock = RunLock()
     for claim in claims:
         facts = _matching_facts(claim, public_facts)
+        claim_includes_scope2 = claim.scope in {
+            Scope.SCOPE_2,
+            Scope.SCOPE_1_2,
+            Scope.SCOPE_1_2_3,
+        }
+        if skip_unmatched_claims and claim_includes_scope2:
+            # live 표에서 같은 Scope의 location/market/ETS 행이 함께
+            # 추출되면, 공개 데이터와 산정 방식이 정확히 같은 행을 우선한다.
+            # 정확한 행이 없을 때는 방식 불일치 자체를 검토할 수 있도록
+            # 기존 후보를 유지한다.
+            exact_method_fact_ids = {
+                fact.id
+                for other in claims
+                if other.scope == claim.scope
+                and _canonical_metric(other.metric) == _canonical_metric(claim.metric)
+                for fact in _matching_facts(other, public_facts)
+                if other.scope2_method == fact.scope2_method
+            }
+            if exact_method_fact_ids:
+                facts = tuple(
+                    fact
+                    for fact in facts
+                    if fact.id not in exact_method_fact_ids
+                    or claim.scope2_method == fact.scope2_method
+                )
         if not facts:
             if skip_unmatched_claims:
                 continue

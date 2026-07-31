@@ -41,6 +41,13 @@ function validPeriod(mapping: BoundaryMapping): string {
   return `${mapping.valid_from_year}년`;
 }
 
+function displayReason(field: string, reason: string): string {
+  if (reason === `${field} 비교에 필요한 값이 누락됨`) {
+    return `보고서에서 ${FIELD_LABEL[field] ?? field} 정보를 확인하지 못함`;
+  }
+  return reason;
+}
+
 export function ComparabilityTable({
   result,
   boundaryMapping,
@@ -128,7 +135,9 @@ export function ComparabilityTable({
                   {c.status}
                 </span>
                 {c.reason && !HIDDEN_REASON_TEXT.has(c.reason) && (
-                  <div className="mt-0.5 text-[13.5px] text-faint">{c.reason}</div>
+                  <div className="mt-0.5 text-[13.5px] text-faint">
+                    {displayReason(c.field, c.reason)}
+                  </div>
                 )}
               </td>
             </tr>
