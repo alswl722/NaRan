@@ -36,7 +36,9 @@ tmp/
 *.db
 *.db-journal
 
-# Downloaded source documents (keep URLs and hashes in fixtures)
+# Downloaded source documents. 심사 재현에 필요한 공식 보고서 2개만 포함한다.
 references/*.pdf
+!references/Samsung-Biologics-2025-ESG-Report_KR.pdf
+!references/Samsung_Electronics_Sustainability_Report_2025_ENG.pdf
 
 docs/

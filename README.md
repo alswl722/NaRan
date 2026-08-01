@@ -60,6 +60,19 @@ docker compose up --build
 실제 자료와 합성 fixture의 구분 및 사례별 정답은 `fixtures/ground_truth.md`에서 확인할 수
 있습니다.
 
+### 포함된 공식 보고서 원문
+
+심사 환경에서 PDF 근거 화면과 Gemini 실시간 추출을 별도 다운로드 없이 재현할 수 있도록
+분석 대상 보고서 2개를 `references/`에 포함했습니다.
+
+| 기업 | 저장 파일 | 공식 출처 | SHA-256 |
+| --- | --- | --- | --- |
+| 삼성바이오로직스 | `references/Samsung-Biologics-2025-ESG-Report_KR.pdf` | [삼성바이오로직스 2025 ESG 보고서](https://samsungbiologics.com/common/fileDownload.do?_fdFileName_=d54f43d1d109443b9ce08c1edb021f2d.pdf&_fdFileOriName_=Samsung-Biologics-2025-ESG-Report_KR.pdf&_fdSubPath_=esg_tcfd) | `9efdc8847c7ebe843ffa468b637087ab5fb224972eecc74b5f696507195ff230` |
+| 삼성전자 | `references/Samsung_Electronics_Sustainability_Report_2025_ENG.pdf` | [삼성전자 2025 지속가능경영보고서](https://www.samsung.com/global/sustainability/media/pdf/Samsung_Electronics_Sustainability_Report_2025_ENG.pdf) | `aee5b45480512c05b13b3bfceab1d170232aae847e6ba398b2ebdcab842f7155` |
+
+두 문서는 각 기업이 공개한 공식 자료이며 본 저장소에는 공모전 심사와 기능 재현을 위한
+분석 원문으로 포함했습니다. 문서의 저작권과 상표권은 각 권리자에게 있습니다.
+
 ## 두 가지 분석 모드
 
 ### 1. 검증 저장값 — 기본·심사용
