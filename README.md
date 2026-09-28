@@ -21,7 +21,7 @@ Gemini API 키와 외부 네트워크 없이 핵심 기능 전체를 실행할 �
 필요한 것은 Docker Desktop과 Git입니다.
 
 ```bash
-git clone <제출한 GitHub 저장소 URL>
+git clone https://github.com/alswl722/NaRan.git
 cd NaRan
 cp .env.example .env
 docker compose up --build
